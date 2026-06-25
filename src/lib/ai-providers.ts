@@ -662,7 +662,14 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
       const errMsg = proxyErr instanceof Error ? proxyErr.message : '';
       ariManager.updateAfterCall(provider, false, Date.now() - t0, model);
 
-      const isRetryable = /429|500|502|503|504|fetch|network/i.test(errMsg);
+      // [H2 fix] streamViaProxy throws a localized (Korean) 429 message that the
+      // /429.../ regex can't match — judge rate-limit/429 by the structural signal
+      // (_retryAfterMs / _status=429) the proxy attaches, not by the message text.
+      // Keep the English-message regex as an OR for non-429 retryable errors.
+      const proxySignal = proxyErr as { _retryAfterMs?: number; _status?: number };
+      const isRateLimited =
+        typeof proxySignal._retryAfterMs === 'number' || proxySignal._status === 429;
+      const isRetryable = isRateLimited || /429|500|502|503|504|fetch|network/i.test(errMsg);
 
       if (isRetryable && attempt < MAX_RETRIES) {
         lastError = proxyErr instanceof Error ? proxyErr : new Error(errMsg);
@@ -679,7 +686,16 @@ export async function streamChat(opts: StreamOptions): Promise<string> {
   // Triggers: (1) quota/rate-limit errors, (2) DGX-down errors when BYOK fallback enabled.
   // Falls back in ARI score order, skipping providers without a stored API key.
   // Does NOT persist the switch to localStorage; active provider is unchanged.
+  // [H2 fix] A 429 from streamViaProxy carries a Korean message that isQuotaError's
+  // regex can't match — recognize the structural rate-limit signal (_retryAfterMs /
+  // _status=429) so quota/rate-limit hits still trigger ARI fallback. Regex kept as
+  // OR for English-message provider errors.
+  const lastErrSignal = lastError as (Error & { _retryAfterMs?: number; _status?: number }) | null;
+  const lastErrRateLimited = !!lastErrSignal && (
+    typeof lastErrSignal._retryAfterMs === 'number' || lastErrSignal._status === 429
+  );
   const shouldFallback = providerAutoFallbackEnabled && lastError && (
+    lastErrRateLimited ||
     isQuotaError(lastError.message) ||
     isDgxDownError(lastError.message)
   );

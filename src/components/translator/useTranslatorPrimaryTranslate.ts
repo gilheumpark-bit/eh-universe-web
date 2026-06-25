@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import { logger } from "@/lib/logger";
 import type { Lang } from "@/lib/LangContext";
@@ -83,6 +84,14 @@ export function useTranslatorPrimaryTranslate({
   to,
   translationMode,
 }: UseTranslatorPrimaryTranslateArgs) {
+  // [H9 fix] Live ref to the *current* active chapter index. The hook re-renders
+  // whenever activeChapterIndex changes, so updating the ref during render keeps
+  // it in sync for reads inside async completion callbacks (where the captured
+  // prop value would be stale). Chapters have no stable id, so the index is the
+  // only identifier available (see ChapterEntry in src/types/translator.ts).
+  const activeChapterIndexRef = useRef(activeChapterIndex);
+  activeChapterIndexRef.current = activeChapterIndex;
+
   const updateStoryBibleAfterTranslation = async ({
     translatedText,
     chapterName,
@@ -141,6 +150,11 @@ export function useTranslatorPrimaryTranslate({
     const now = Date.now();
     if (now - lastPrimaryTranslateAt.current < 800) return;
     lastPrimaryTranslateAt.current = now;
+    // [H9 fix] Capture the chapter that started this translation. setResult writes
+    // to the shared editor state, so on completion we only apply it when this
+    // chapter is still active; otherwise the result would overwrite the editor of
+    // whatever chapter the user switched to.
+    const startChapterIndex = activeChapterIndex;
     setLoading(true);
     setStatusMsg(statusLabel(lang, "fast-draft"));
     try {
@@ -154,15 +168,25 @@ export function useTranslatorPrimaryTranslate({
           mode: translationMode,
         }),
         source,
-        activeChapterIndex,
+        startChapterIndex,
       );
       const translated = await requestTranslation(enriched);
-      setResult(translated);
-      recordEpisodeMemory(source, translated, activeChapterIndex);
-      patchActiveChapter({ result: translated, isDone: true, stageProgress: 5 });
+      // [H9 fix] Only push to the shared editor if the starting chapter is still active.
+      if (activeChapterIndexRef.current === startChapterIndex) {
+        setResult(translated);
+      }
+      recordEpisodeMemory(source, translated, startChapterIndex);
+      // [H9 fix] Persist to the originating chapter by index (not patchActiveChapter,
+      // which targets whatever chapter is currently active) so the result is never lost.
+      if (startChapterIndex !== null) {
+        patchChapterAtIndex(startChapterIndex, { result: translated, isDone: true, stageProgress: 5 });
+      } else {
+        patchActiveChapter({ result: translated, isDone: true, stageProgress: 5 });
+      }
       const mergedStoryBible = await updateStoryBibleAfterTranslation({
         translatedText: translated,
         chapterName: activeChapter?.name || "Current Chapter",
+        chapterIndex: startChapterIndex,
       });
       setHistory((prev) => [{ source, result: translated, time: Date.now(), from, to }, ...prev.slice(0, 19)]);
       if (translationMode === "novel" && mergedStoryBible !== storySummary) {
@@ -181,6 +205,8 @@ export function useTranslatorPrimaryTranslate({
     const now = Date.now();
     if (now - lastPrimaryTranslateAt.current < 800) return;
     lastPrimaryTranslateAt.current = now;
+    // [H9 fix] Capture the chapter that started this deep translation; see translate() above.
+    const startChapterIndex = activeChapterIndex;
     setLoading(true);
     const stageSequence = translationMode === "novel"
       ? [
@@ -209,23 +235,44 @@ export function useTranslatorPrimaryTranslate({
           mode: translationMode,
         });
         const enrichedStage = item.stage === 1
-          ? await enrichPayloadWithPipeline(stagePayload, source, activeChapterIndex)
+          ? await enrichPayloadWithPipeline(stagePayload, source, startChapterIndex)
           : stagePayload;
         currentResult = await requestTranslation(
           enrichedStage,
-          { stream: true, onDelta: (streamText) => setResult(streamText) },
+          {
+            stream: true,
+            // [H9 fix] Drop streaming deltas into the editor only while the starting
+            // chapter is still active; otherwise they would corrupt another chapter.
+            onDelta: (streamText) => {
+              if (activeChapterIndexRef.current === startChapterIndex) setResult(streamText);
+            },
+          },
         );
-        setResult(currentResult);
-        patchActiveChapter({
-          result: currentResult,
-          stageProgress: item.stage,
-          isDone: item.stage === 5,
-        });
+        // [H9 fix] Guard the per-stage editor write the same way as the streaming deltas.
+        if (activeChapterIndexRef.current === startChapterIndex) {
+          setResult(currentResult);
+        }
+        // [H9 fix] Patch the originating chapter by index so progress is never written
+        // to whatever chapter happens to be active at completion time.
+        if (startChapterIndex !== null) {
+          patchChapterAtIndex(startChapterIndex, {
+            result: currentResult,
+            stageProgress: item.stage,
+            isDone: item.stage === 5,
+          });
+        } else {
+          patchActiveChapter({
+            result: currentResult,
+            stageProgress: item.stage,
+            isDone: item.stage === 5,
+          });
+        }
       }
-      recordEpisodeMemory(source, currentResult, activeChapterIndex);
+      recordEpisodeMemory(source, currentResult, startChapterIndex);
       const mergedStoryBible = await updateStoryBibleAfterTranslation({
         translatedText: currentResult,
         chapterName: activeChapter?.name || "Current Chapter",
+        chapterIndex: startChapterIndex,
       });
       setHistory((prev) => [{ source, result: currentResult, time: Date.now(), from, to }, ...prev.slice(0, 19)]);
       if (translationMode === "novel" && mergedStoryBible !== storySummary) {

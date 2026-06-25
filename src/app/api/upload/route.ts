@@ -288,7 +288,14 @@ function readZipEntries(buffer: Buffer) {
       const dataStart = localOffset + 30 + localNameLength + localExtraLength;
       const compressed = buffer.slice(dataStart, dataStart + compressedSize);
       if (method === 0) entries.set(name.toLowerCase(), compressed);
-      if (method === 8) entries.set(name.toLowerCase(), inflateRawSync(compressed));
+      // [H1 fix] Cap inflate output so a crafted deflate stream cannot expand past
+      // ZIP_DECOMPRESSED_CAP into OOM. scanZipDecompressed only trusts the Central
+      // Directory's *declared* uncompressedSize, which an attacker can forge; this
+      // enforces the limit on the *actual* output. inflateRawSync throws on overflow,
+      // and every readZipEntries caller runs inside the POST try/catch (line 708).
+      if (method === 8) {
+        entries.set(name.toLowerCase(), inflateRawSync(compressed, { maxOutputLength: ZIP_DECOMPRESSED_CAP }));
+      }
     }
 
     offset += 46 + nameLength + extraLength + commentLength;

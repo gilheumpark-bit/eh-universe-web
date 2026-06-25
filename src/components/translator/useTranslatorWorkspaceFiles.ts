@@ -373,7 +373,9 @@ export function useTranslatorWorkspaceFiles({
         "</body></html>";
       mimeType = "text/html";
     } else if (format === "csv") {
-      content = '\\uFEFF"Chapter","Content"\\n' + chapters.map((chapter: Partial<ChapterEntry>) => `"${chapter.name?.replace(/"/g, '""')}","${(chapter.result || "").replace(/"/g, '""')}"`).join("\\n");
+      // [H8 fix] BOM/개행이 이중 이스케이프(\\uFEFF, \\n)되어 리터럴 텍스트로 출력 → CSV 전체가 한 줄로 깨짐.
+      // 실제 U+FEFF BOM(﻿)과 실제 CRLF 줄바꿈으로 교정. 셀 인용("" escape)은 RFC 4180 그대로 유지.
+      content = '﻿"Chapter","Content"\r\n' + chapters.map((chapter: Partial<ChapterEntry>) => `"${(chapter.name || "").replace(/"/g, '""')}","${(chapter.result || "").replace(/"/g, '""')}"`).join("\r\n");
       mimeType = "text/csv";
     }
 

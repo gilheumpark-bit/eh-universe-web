@@ -18,7 +18,6 @@ import {
   getSlotsForCrossValidation,
   getActiveSlotCount,
   trackSlotUsage,
-  executeParallel,
   evaluateCrossValidation,
   type CrossValidationResult,
 } from './multi-key-manager';
@@ -223,56 +222,52 @@ export async function streamWithCrossValidation(
     }]);
   }
 
-  // 병렬 실행
-  const parallelResults = await executeParallel(
-    candidates,
-    async (slot) => {
-      // 각 슬롯별 독립 호출
-      const prevProvider = getActiveProvider();
-      const prevModel = getActiveModel();
-      const prevKey = getApiKey(slot.provider);
+  // [H3 fix] 기존 executeParallel 경로는 각 슬롯 task가 동시에 전역
+  // active provider/model/key(localStorage)를 set→복원 했다. 병렬 실행 시
+  // 한 슬롯이 set한 전역 상태를 다른 슬롯이 덮어써 잘못된 키/프로바이더로
+  // 요청이 나가거나 키가 오염됐다(set→호출→복원의 임계 구역이 인터리브됨).
+  // → 전역 상태를 변이하는 set→호출→복원 구간을 *순차* 직렬화한다.
+  //   슬롯 호출을 streamWithMultiKey로 위임하면(이미 동일한 set/복원·사용량
+  //   추적 로직 보유) 한 번에 하나의 슬롯만 전역 상태를 점유하므로 경쟁이
+  //   사라진다. 결과 집계(evaluateCrossValidation)와 사용량 추적 동작은 유지.
+  //   개별 슬롯 실패는 건너뛰어(allSettled와 동일) 하나의 실패가 전체 교차
+  //   검증을 중단시키지 않게 한다. 직렬 실행이라 config.maxParallel은 미적용.
+  // [H3 fix] evaluateCrossValidation의 매개변수 타입을 그대로 차용해
+  // ProviderId 출처 차이로 인한 타입 불일치를 방지.
+  const scored: Parameters<typeof evaluateCrossValidation>[0] = [];
 
-      setActiveProvider(slot.provider);
-      setActiveModel(slot.model);
-      setApiKey(slot.provider, slot.apiKey);
+  for (const slot of candidates.slice(0, config.maxParallel)) {
+    try {
+      let text = '';
+      const res = await streamWithMultiKey({
+        role: opts.role,
+        forceSlotId: slot.id,
+        systemInstruction: opts.systemInstruction,
+        messages: opts.messages,
+        temperature: opts.temperature,
+        maxTokens: opts.maxTokens,
+        signal: opts.signal,
+        onChunk: (c) => { text += c; },
+      });
 
-      try {
-        let text = '';
-        await originalStreamChat({
-          systemInstruction: opts.systemInstruction,
-          messages: opts.messages,
-          temperature: opts.temperature,
-          maxTokens: opts.maxTokens,
-          signal: opts.signal,
-          onChunk: (c) => { text += c; },
-        });
-
-        // 사용량 추적
-        const inputTokens = Math.ceil(
-          opts.messages.reduce((acc, m) => acc + m.content.length, 0) / 4
-        );
-        const outputTokens = Math.ceil(text.length / 4);
-        const updatedConfig = trackSlotUsage(loadMultiKeyConfig(), slot.id, inputTokens, outputTokens);
-        saveMultiKeyConfig(updatedConfig);
-
-        return text;
-      } finally {
-        setActiveProvider(prevProvider);
-        setActiveModel(prevModel);
-        if (prevKey !== undefined) setApiKey(slot.provider, prevKey);
-      }
-    },
-    config.maxParallel,
-  );
-
-  // 점수 추출 & 평가
-  const scored = parallelResults.map((r) => ({
-    score: opts.scoreExtractor(r.result),
-    response: r.result,
-    slotId: r.slotId,
-    provider: r.provider,
-    model: r.model,
-  }));
+      // [H3 fix] 집계 필드는 KeySlot(slot.*)에서 취한다. forceSlotId로 이
+      // 슬롯을 강제 지정했으므로 res.provider/model과 동일하며, slot.provider는
+      // multi-key-manager의 (좁은) ProviderId라 evaluateCrossValidation 타입과
+      // 정확히 일치한다(원본 executeParallel 경로와 동일한 출처).
+      void res; // streamWithMultiKey 호출은 사용량 추적 등 부수효과를 위해 유지
+      scored.push({
+        score: opts.scoreExtractor(text),
+        response: text,
+        slotId: slot.id,
+        provider: slot.provider,
+        model: slot.model,
+      });
+    } catch (err) {
+      // 한 슬롯 실패는 무시하고 다음 슬롯 진행 (Promise.allSettled 동작 보존).
+      // AbortError는 전체 중단 의도이므로 그대로 전파.
+      if (err instanceof DOMException && err.name === 'AbortError') throw err;
+    }
+  }
 
   return evaluateCrossValidation(scored);
 }

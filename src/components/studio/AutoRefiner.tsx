@@ -326,7 +326,13 @@ const AutoRefiner: React.FC<AutoRefinerProps> = ({ content, language, context, o
     setUndoStack(prev => [...prev, workingContent]);
 
     const paragraphs = workingContent.split('\n\n').filter(p => p.trim());
-    const pIdx = sug.paragraphIndex;
+
+    // [H7 fix] paragraphIndex was computed once against the ORIGINAL content, but a prior
+    // insert_after shifts every later paragraph by +1 in workingContent. Using the stale
+    // index would overwrite the wrong paragraph. Re-locate the target by its original text
+    // (sug.original, captured at analysis time) and fall back to the index only if not found.
+    const matchedIdx = paragraphs.indexOf(sug.original);
+    const pIdx = matchedIdx !== -1 ? matchedIdx : sug.paragraphIndex;
 
     if (sug.action === 'insert_after') {
       paragraphs.splice(pIdx + 1, 0, sug.result);
