@@ -179,7 +179,7 @@ function FullBundleSection({ language }: { language: AppLanguage }) {
       </h3>
       <p className="text-xs text-text-tertiary mb-4 leading-relaxed">
         {L4(language, {
-          ko: '원고 + 설정 + 번역 메모리까지 한 번에 백업하고 복원하세요. 로어가드를 떠날 때도 데이터는 당신 것입니다.',
+          ko: '원고 + 설정 + 번역 메모리까지 한 번에 백업하고 복원하세요. Loreguard를 떠날 때도 데이터는 당신 것입니다.',
           en: 'Back up and restore everything — manuscripts, settings, translation memory. Your data stays yours, even if you leave Loreguard.',
           ja: '原稿+設定+翻訳メモリを一括バックアップ・復元。Loreguardを離れてもデータはあなたのものです。',
           zh: '一次性备份和恢复稿件+设置+翻译记忆。即使离开洛尔加德,数据仍归您所有。',

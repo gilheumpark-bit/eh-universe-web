@@ -20,7 +20,7 @@ export function TranslatorConnectionKeyBanner({
         {langKo ? '연결 키를 등록하세요.' : 'Add a connection key to start.'}
         <span className="hidden sm:inline">
           {langKo
-            ? ' 로어가드 공통 키 저장소에서 연결 키를 등록하세요.'
+            ? ' Loreguard 공통 키 저장소에서 연결 키를 등록하세요.'
             : ' Use the shared Loreguard key store to add a connection key.'}
         </span>
       </p>

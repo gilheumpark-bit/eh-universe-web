@@ -11,7 +11,7 @@ export interface TranslatorContextState {
   workspaceTab: WorkspaceTab;
   setWorkspaceTab: Dispatch<SetStateAction<WorkspaceTab>>;
   hostedNoa: boolean;
-  /** `/api/ai-capabilities` — 로어가드 공통 연결 키/기본 운영 플래그 */
+  /** `/api/ai-capabilities` — Loreguard 공통 연결 키/기본 운영 플래그 */
   hostedProviders: Partial<Record<ProviderId, boolean>>;
   aiCapabilitiesLoaded: boolean;
   openApiKeyModal: () => void;

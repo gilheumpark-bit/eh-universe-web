@@ -197,7 +197,7 @@ export default function MobileDesktopOnlyGate({
       <div className="shrink-0 text-center safe-area-bottom">
         <p className="text-[10px] text-text-quaternary">
           {L4(lang, {
-            ko: '로어가드 · 데스크톱 최적화',
+            ko: 'Loreguard · 데스크톱 최적화',
             en: 'Loreguard · Desktop Optimized',
             ja: 'ローアガード · デスクトップ最適化',
             zh: '洛尔加德 · 桌面端优化',

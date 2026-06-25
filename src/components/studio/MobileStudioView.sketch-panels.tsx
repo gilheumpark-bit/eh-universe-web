@@ -63,7 +63,7 @@ export function WorldMemoPanel({ language, store, setStore }: MobileSketchPanelP
       <button
         onClick={addMemo}
         disabled={!draft.trim()}
-        className="w-full py-3 bg-accent-blue text-white font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
+        className="w-full py-3 bg-accent-blue text-white font-bold text-sm rounded-xl disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
       >
         {L4(language, { ko: "메모 추가", en: "Add Memo", ja: "メモ追加", zh: "添加备忘" })}
       </button>
@@ -163,7 +163,7 @@ export function CharacterSketchPanel({ language, store, setStore }: MobileSketch
       <button
         onClick={addChar}
         disabled={!name.trim()}
-        className="w-full py-3 bg-accent-purple text-white font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
+        className="w-full py-3 bg-accent-purple text-white font-bold text-sm rounded-xl disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
       >
         {L4(language, { ko: "캐릭터 추가", en: "Add Character", ja: "キャラクター追加", zh: "添加角色" })}
       </button>
@@ -265,7 +265,7 @@ export function PlotBrainstormPanel({ language, store, setStore }: MobileSketchP
       <button
         onClick={addPlot}
         disabled={!title.trim()}
-        className="w-full py-3 bg-accent-amber text-bg-primary font-bold text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
+        className="w-full py-3 bg-accent-amber text-bg-primary font-bold text-sm rounded-xl disabled:bg-bg-tertiary disabled:text-text-tertiary disabled:cursor-not-allowed active:scale-98 transition-[transform,opacity] min-h-[44px]"
       >
         {L4(language, { ko: "아이디어 추가", en: "Add Idea", ja: "アイデア追加", zh: "添加创意" })}
       </button>

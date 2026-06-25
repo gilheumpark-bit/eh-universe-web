@@ -23,7 +23,7 @@ export function buildArticleJsonLd(article: {
     publisher: {
       '@type': 'Organization',
       name: 'EH',
-      alternateName: '로어가드 · Loreguard',
+      alternateName: 'Loreguard',
       url: 'https://eh-universe.com',
     },
     isAccessibleForFree: true,
@@ -35,7 +35,7 @@ export function buildWebAppJsonLd(): object {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: '로어가드 (Loreguard)',
+    name: 'Loreguard',
     alternateName: 'Loreguard · EH',
     description: 'Loreguard는 프로젝트 생성, 세계관, 씬시트, 집필, 퇴고, 번역, 출고를 한 흐름으로 관리하는 창작 전문 IDE입니다.',
     url: 'https://eh-universe.com',

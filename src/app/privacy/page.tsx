@@ -8,6 +8,7 @@ import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import LegalPageLayout from "@/components/legal/LegalPageLayout";
 import { TERMS_UPDATED_AT } from "@/components/legal/TermsUpdateBanner";
+import { SUPPORT_EMAIL_DISPLAY, HAS_SUPPORT_EMAIL, supportMailtoHref } from "@/lib/public-contact";
 
 // ============================================================
 // PART 2 — Privacy Policy Page (KO/EN + JA/ZH policy copy)
@@ -28,7 +29,7 @@ export default function PrivacyPage() {
       effectiveDate={EFFECTIVE_DATE}
       updatedAt={UPDATED_AT}
       subtitle={{
-        ko: "사업자: EH Universe / 로어가드(Loreguard)",
+        ko: "사업자: EH Universe / Loreguard",
         en: "Operator: EH Universe / Loreguard",
         ja: "運営者: EH Universe",
         zh: "运营方: EH Universe",
@@ -74,7 +75,7 @@ export default function PrivacyPage() {
           <li>GitHub (Microsoft, US): {T({ ko: "사용자가 선택한 경우 원고 Git 동기화", en: "manuscript Git sync when enabled", ja: "任意 Git 同期", zh: "可选 Git 同步" })}</li>
           <li>Vercel (Vercel Inc., US): {T({ ko: "호스팅·엣지 전송·Analytics", en: "hosting, edge delivery, Analytics", ja: "ホスティング・エッジ配信・Analytics", zh: "托管、边缘传输与 Analytics" })}</li>
           <li>Sentry (Functional Software Inc., US): {T({ ko: "에러 모니터링", en: "error monitoring", ja: "エラー監視", zh: "错误监控" })}</li>
-          <li>{T({ ko: "로어가드 운영 경로와 사용자가 직접 연결한 제공사: 노아 제안·번역 보조 처리", en: "Loreguard managed path and user-connected providers: Noa suggestions and translation assistance", ja: "Loreguard 運用経路および利用者接続の提供者: Noa提案・翻訳支援", zh: "Loreguard 托管路径及用户连接的提供方：Noa 建议与翻译辅助" })}</li>
+          <li>{T({ ko: "Loreguard 운영 경로와 사용자가 직접 연결한 제공사: 노아 제안·번역 보조 처리", en: "Loreguard managed path and user-connected providers: Noa suggestions and translation assistance", ja: "Loreguard 運用経路および利用者接続の提供者: Noa提案・翻訳支援", zh: "Loreguard 托管路径及用户连接的提供方：Noa 建议与翻译辅助" })}</li>
           <li>{T({ ko: "로컬·개발용 DGX 경로(활성화된 경우): 내부 개발·비상 점검용 처리", en: "Local/development DGX path, when enabled: internal development and emergency-check processing", ja: "ローカル・開発用 DGX 経路(有効化された場合): 内部開発・非常時確認用処理", zh: "本地/开发 DGX 路径（启用时）：内部开发与应急检查处理" })}</li>
           <li>{T({ ko: "사용자가 연결 키로 직접 연결한 제공사 (Gemini / Claude / OpenAI / Groq 등): 각 제공사 정책에 따라 입력 데이터 처리", en: "Providers connected by the user's connection key (Gemini, Claude, OpenAI, Groq, etc.): input data processed under each provider's policy", ja: "利用者が接続キーで直接接続した提供者: 各社ポリシー適用", zh: "用户通过连接密钥直接连接的提供方: 遵循各自政策" })}</li>
         </ul>
@@ -135,7 +136,7 @@ export default function PrivacyPage() {
         </h2>
         <p className="text-text-secondary text-sm leading-relaxed">
           {T({
-            ko: "Firebase/Vercel은 미국 등 여러 국가에 분산 서버를 운영합니다. 로어가드 운영 경로와 사용자가 직접 연결한 제공사의 데이터 위치는 각 제공사 정책에 따릅니다. 로컬·개발용 DGX 경로가 활성화된 경우 해당 처리 서버는 대한민국에 위치합니다.",
+            ko: "Firebase/Vercel은 미국 등 여러 국가에 분산 서버를 운영합니다. Loreguard 운영 경로와 사용자가 직접 연결한 제공사의 데이터 위치는 각 제공사 정책에 따릅니다. 로컬·개발용 DGX 경로가 활성화된 경우 해당 처리 서버는 대한민국에 위치합니다.",
             en: "Firebase/Vercel operate distributed servers including in the US. Data locations for server-side developer API providers and user-connected AI providers follow each provider's policy. When the local/development DGX path is explicitly enabled, that inference server is located in the Republic of Korea.",
             ja: "Firebase/Vercel は米国を含む複数地域で分散サーバーを運用しています。サーバー側の開発API提供者および利用者接続のAI提供者のデータ所在地は各社ポリシーに従います。ローカル・開発用DGX経路が明示的に有効化された場合、その推論サーバーは大韓民国に所在します。",
             zh: "Firebase/Vercel 在美国等多国部署分布式服务器。服务端开发 API 提供方及用户连接的 AI 提供商的数据所在地遵循各自政策。明确启用本地/开发 DGX 路径时，该推理服务器位于韩国。",
@@ -150,7 +151,7 @@ export default function PrivacyPage() {
         </h2>
         <p className="text-text-secondary text-sm leading-relaxed">
           {T({
-            ko: "사용자의 원고·세계관·캐릭터 등 창작물은 Loreguard의 로컬·개발용 DGX/Qwen 경로를 별도로 사용하는 경우에도 모델 재학습 데이터로 사용되지 않습니다. 로어가드 운영 경로와 사용자가 직접 연결한 외부 제공사의 학습 정책은 각 제공사 약관에 따르므로 /ai-disclosure 문서를 참고해 주세요.",
+            ko: "사용자의 원고·세계관·캐릭터 등 창작물은 Loreguard의 로컬·개발용 DGX/Qwen 경로를 별도로 사용하는 경우에도 모델 재학습 데이터로 사용되지 않습니다. Loreguard 운영 경로와 사용자가 직접 연결한 외부 제공사의 학습 정책은 각 제공사 약관에 따르므로 /ai-disclosure 문서를 참고해 주세요.",
             en: "User manuscripts, world-building, and characters are not used to retrain models even when Loreguard's local/development DGX/Qwen path is explicitly used. Training policies of server-side developer API providers and user-connected AI providers follow each provider's terms. See /ai-disclosure.",
             ja: "利用者の創作物は、Loreguard のローカル・開発用 DGX/Qwen 経路が明示的に使用される場合でも、モデル再学習には使用しません。サーバー側の開発API提供者および利用者接続のAI提供者は各社ポリシーに従います。",
             zh: "即使明确使用 Loreguard 的本地/开发 DGX/Qwen 路径，用户作品也不会用于模型再训练。服务端开发 API 提供方及用户连接的 AI 提供商的训练政策遵循各自条款。详见 /ai-disclosure。",
@@ -164,15 +165,17 @@ export default function PrivacyPage() {
           9. {T({ ko: "문의 및 개인정보보호 책임자", en: "Contact & DPO", ja: "お問い合わせ・DPO", zh: "联系方式与 DPO" })}
         </h2>
         <div className="text-text-secondary text-sm leading-relaxed space-y-1">
+          {HAS_SUPPORT_EMAIL && (
           <p>
             Email:{" "}
             <a
-              href="mailto:gilheumpark@gmail.com"
+              href={supportMailtoHref()}
               className="text-accent-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
             >
-              gilheumpark [at] gmail [dot] com
+              {SUPPORT_EMAIL_DISPLAY}
             </a>
           </p>
+          )}
           <p>
             {T({
               ko: "본 방침은 법령 개정 또는 서비스 변경 시 사전 공지 후 개정됩니다.",

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { HAS_SUPPORT_EMAIL, supportMailtoHref } from "@/lib/public-contact";
 
 /**
  * 앱(몰입) 경로 — 이곳에서는 Footer 미렌더.
@@ -44,9 +45,6 @@ export default function Footer() {
           <div className="flex flex-col gap-1">
             <div className="font-bold text-[#202534] text-sm tracking-tight">
               Loreguard
-              <span className="text-[#4f5665] font-normal ml-2">
-                ({T({ ko: "로어가드", en: "Loreguard", ja: "ロアガード", zh: "守卷者" })})
-              </span>
             </div>
             <div className="text-xs text-[#4f5665]">
               {T({
@@ -99,12 +97,14 @@ export default function Footer() {
             >
               {T({ ko: "변경 이력", en: "Changelog", ja: "変更履歴", zh: "更新日志" })}
             </Link>
+            {HAS_SUPPORT_EMAIL && (
             <a
-              href="mailto:gilheumpark@gmail.com"
+              href={supportMailtoHref()}
               className="text-[#4f5665] hover:text-[#202534] hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded px-1 py-0.5 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
             >
               {T({ ko: "문의", en: "Contact", ja: "お問い合わせ", zh: "联系" })}
             </a>
+            )}
           </nav>
         </div>
       </div>

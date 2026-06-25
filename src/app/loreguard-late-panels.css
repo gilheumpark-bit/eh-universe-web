@@ -2817,8 +2817,8 @@ body[data-lg-resizing="1"] { cursor: col-resize !important; user-select: none !i
 /* Work-surface cookie notice: keep the first-run legal notice away from
    writing composers, mobile bottom controls, and primary creation CTAs. */
 body .lg-cookie-work-surface {
-  left: auto;
-  right: 12px;
+  left: 12px;
+  right: auto;
   top: auto;
   bottom: max(10px, calc(env(safe-area-inset-bottom) + 10px));
   z-index: 60;

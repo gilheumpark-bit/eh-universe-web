@@ -8,6 +8,7 @@ import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import LegalPageLayout from "@/components/legal/LegalPageLayout";
 import { TERMS_UPDATED_AT } from "@/components/legal/TermsUpdateBanner";
+import { SUPPORT_EMAIL_DISPLAY, HAS_SUPPORT_EMAIL, supportMailtoHref } from "@/lib/public-contact";
 
 // ============================================================
 // PART 2 — Terms of Service Page (KO/EN + JA/ZH policy copy)
@@ -34,7 +35,7 @@ export default function TermsPage() {
         </h2>
         <p className="text-text-secondary text-sm leading-relaxed">
           {T({
-            ko: "로어가드(Loreguard)는 EH Universe가 운영하는 창작 전문 IDE입니다. 서비스는 Studio와 번역·현지화 워크스페이스를 중심으로, 개인 창작자와 소규모 팀이 기획, 집필, 번역, 과정기록, 출고 패키지를 관리하도록 돕습니다.",
+            ko: "Loreguard는 EH Universe가 운영하는 창작 전문 IDE입니다. 서비스는 Studio와 번역·현지화 워크스페이스를 중심으로, 개인 창작자와 소규모 팀이 기획, 집필, 번역, 과정기록, 출고 패키지를 관리하도록 돕습니다.",
             en: "Loreguard is a creative process IDE operated by EH Universe. The service centers on Studio and the translation/localization workspace, helping individual creators and small teams manage planning, writing, translation, process records, and release packages.",
             ja: "Loreguardは EH Universe が運営する創作専門 IDE です。Studio と翻訳・ローカライズ作業領域を中心に、企画、執筆、翻訳、過程記録、出荷パッケージ管理を支援します。",
             zh: "Loreguard 是 EH Universe 运营的创作专业 IDE。服务以 Studio 与翻译/本地化工作区为核心，帮助个人创作者和小团队管理企划、写作、翻译、过程记录与出库包。",
@@ -102,7 +103,7 @@ export default function TermsPage() {
           4. {T({ ko: "노아 활용 안내", en: "Noa Usage Notice", ja: "Noa活用に関する案内", zh: "Noa 使用说明" })}
         </h2>
         <ul className="list-disc pl-5 space-y-2 text-text-secondary text-sm leading-relaxed">
-          <li>{T({ ko: "Loreguard는 로어가드 운영 경로, 사용자가 등록한 연결 키, 사용자가 별도로 켠 로컬 실행 경로를 노아 기능에 연결할 수 있습니다. 모델별 상세는 /ai-disclosure에서 확인할 수 있습니다.", en: "Loreguard can connect Noa features to the Loreguard managed path, user-provided connection keys, and user-enabled local execution paths. Model details are available at /ai-disclosure.", ja: "Loreguard は運用経路、利用者が登録した接続キー、利用者が有効化したローカル実行経路を Noa 機能に接続できます。詳細は /ai-disclosure。", zh: "Loreguard 可将 Noa 功能连接到 Loreguard 托管路径、用户登记的连接密钥，以及用户启用的本地执行路径。详情见 /ai-disclosure。" })}</li>
+          <li>{T({ ko: "Loreguard는 Loreguard 운영 경로, 사용자가 등록한 연결 키, 사용자가 별도로 켠 로컬 실행 경로를 노아 기능에 연결할 수 있습니다. 모델별 상세는 /ai-disclosure에서 확인할 수 있습니다.", en: "Loreguard can connect Noa features to the Loreguard managed path, user-provided connection keys, and user-enabled local execution paths. Model details are available at /ai-disclosure.", ja: "Loreguard は運用経路、利用者が登録した接続キー、利用者が有効化したローカル実行経路を Noa 機能に接続できます。詳細は /ai-disclosure。", zh: "Loreguard 可将 Noa 功能连接到 Loreguard 托管路径、用户登记的连接密钥，以及用户启用的本地执行路径。详情见 /ai-disclosure。" })}</li>
           <li>{T({ ko: "노아 제안은 작가가 선택하고 고치는 초안 자료입니다. 기존 작품과 유사해 보이는 부분은 게시 전 유사성 점검과 편집 검토를 권장합니다.", en: "Noa suggestions are draft material selected and edited by the author. If a passage resembles existing work, similarity checks and editorial review are recommended before publication.", ja: "Noa 提案は作者が選択・編集する草案です。既存作品に似た箇所は公開前の確認を推奨します。", zh: "Noa 建议是由作者选择并编辑的草稿材料。若内容与既有作品相似，建议发布前进行相似性检查与编辑审阅。" })}</li>
           <li>{T({ ko: "상업 출판과 외부 플랫폼 게시 전에는 각 플랫폼의 고지 기준과 연재 규칙을 확인해 주세요.", en: "Before commercial publication or platform posting, review each platform's disclosure and serialization rules.", ja: "商業出版や外部掲載の前に、各プラットフォームの告知基準と連載規則をご確認ください。", zh: "商业出版或外部平台发布前，请确认各平台的披露标准与连载规则。" })}</li>
         </ul>
@@ -192,15 +193,17 @@ export default function TermsPage() {
           9. {T({ ko: "문의", en: "Contact", ja: "お問い合わせ", zh: "联系方式" })}
         </h2>
         <div className="text-text-secondary text-sm leading-relaxed space-y-1">
+          {HAS_SUPPORT_EMAIL && (
           <p>
             Email:{" "}
             <a
-              href="mailto:gilheumpark@gmail.com"
+              href={supportMailtoHref()}
               className="text-accent-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded"
             >
-              gilheumpark [at] gmail [dot] com
+              {SUPPORT_EMAIL_DISPLAY}
             </a>
           </p>
+          )}
           <p>
             {T({
               ko: "본 약관은 법령 개정 또는 서비스 중대 변경 시 사전 공지 후 개정됩니다. 개정 시점은 페이지 상단의 최종 갱신일로 확인할 수 있으며, 서비스 내 배너로도 안내됩니다.",

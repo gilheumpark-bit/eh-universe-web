@@ -22,7 +22,7 @@ export function formatReleaseCredits(value: number): string {
 }
 
 export function safeDownloadName(value: string | null | undefined): string {
-  const normalized = (value?.trim() || "로어가드_권리_IP_자산화").replace(/[<>:"/\\|?*\u0000-\u001F]/g, "_");
+  const normalized = (value?.trim() || "Loreguard_권리_IP_자산화").replace(/[<>:"/\\|?*\u0000-\u001F]/g, "_");
   return normalized.slice(0, 80);
 }
 

@@ -137,7 +137,7 @@ export function ChatPanel() {
 
       const excerpt = (a: string, max: number) => (a.length <= max ? a : `${a.slice(0, max)}…`);
       const systemInstruction = langKo
-        ? `당신은 로어가드 번역·현지화 작업실의 노아입니다. 사용자 메시지 언어로 답하세요. 허위 인용·원문/번역문 전문 지어내기 금지. 언어 쌍: ${from} → ${to}.\n[원문 발췌]\n${excerpt(source, 1600)}\n[번역 발췌]\n${excerpt(result, 1600)}`
+        ? `당신은 Loreguard 번역·현지화 작업실의 노아입니다. 사용자 메시지 언어로 답하세요. 허위 인용·원문/번역문 전문 지어내기 금지. 언어 쌍: ${from} → ${to}.\n[원문 발췌]\n${excerpt(source, 1600)}\n[번역 발췌]\n${excerpt(result, 1600)}`
         : `You are a translation workspace assistant. Reply in the user's language. Do not invent long quotes. Language pair: ${from} → ${to}.\n[Source excerpt]\n${excerpt(source, 1600)}\n[Translation excerpt]\n${excerpt(result, 1600)}`;
 
       const historyForApi = [...messagesRef.current, userMsg]

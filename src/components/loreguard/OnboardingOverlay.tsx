@@ -173,7 +173,7 @@ export default function OnboardingOverlay({
           <div>
             <h2 id={titleId} className="noa-onboard-title">
               {L4(language, {
-                ko: "로어가드 스튜디오에 오신 것을 환영합니다",
+                ko: "Loreguard 스튜디오에 오신 것을 환영합니다",
                 en: "Welcome to Loreguard Studio",
                 ja: "ロアガード・スタジオへようこそ",
                 zh: "欢迎来到 Loreguard Studio",

@@ -106,7 +106,7 @@ export function SettingsPanel() {
           </div>
           <p className="text-[12px] text-text-secondary leading-relaxed">
             {langKo
-              ? '로어가드 공통 키 저장소를 사용합니다. 모델별 연결 키는 아래에서 등록하세요.'
+              ? 'Loreguard 공통 키 저장소를 사용합니다. 모델별 연결 키는 아래에서 등록하세요.'
               : 'Uses the shared Loreguard key store. Register model connection keys below.'}
           </p>
           <button
@@ -138,7 +138,7 @@ export function SettingsPanel() {
           </h3>
           <p className="text-[12px] text-text-secondary leading-relaxed">
             {langKo
-              ? '특정 번역 엔진을 직접 연결할 때만 씁니다. 로어가드 공통 연결 키와는 따로 보관됩니다.'
+              ? '특정 번역 엔진을 직접 연결할 때만 씁니다. Loreguard 공통 연결 키와는 따로 보관됩니다.'
               : 'Only used when you connect a specific translation engine directly. Stored separately from shared Loreguard keys.'}
           </p>
           <form
@@ -329,7 +329,7 @@ export function SettingsPanel() {
           </h3>
           <p className="text-[12px] text-text-secondary leading-relaxed">
             {langKo
-              ? `우측 「번역 실행」패널에서 번역 방식을 고릅니다. 현재: ${provider}. 연결 키는 로어가드 공통 저장소에서 읽습니다.`
+              ? `우측 「번역 실행」패널에서 번역 방식을 고릅니다. 현재: ${provider}. 연결 키는 Loreguard 공통 저장소에서 읽습니다.`
               : `Pick the engine in the right Translate panel. Current: ${provider}. Connection keys use the shared Loreguard key store.`}
           </p>
         </section>

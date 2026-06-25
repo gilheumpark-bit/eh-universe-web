@@ -35,10 +35,10 @@ export default function AiDisclosurePage() {
         <div className="space-y-4 text-text-secondary text-sm leading-relaxed">
           <div className="premium-panel-soft rounded-[16px] p-4 border border-transparent">
             <div className="font-mono text-xs uppercase tracking-wider text-accent-blue mb-2">
-              {T({ ko: "로어가드 운영 경로", en: "Loreguard managed path", ja: "Loreguard 運用経路", zh: "Loreguard 托管路径" })}
+              {T({ ko: "Loreguard 운영 경로", en: "Loreguard managed path", ja: "Loreguard 運用経路", zh: "Loreguard 托管路径" })}
             </div>
             <ul className="list-disc pl-5 space-y-1">
-              <li>{T({ ko: "로어가드가 운영 환경에 등록한 모델 연결을 통해 노아 제안과 번역 보조를 처리합니다.", en: "Noa suggestions and translation assistance run through model connections configured by Loreguard.", ja: "Loreguard が運用環境に設定したモデル接続を利用します。", zh: "通过 Loreguard 在运营环境中配置的模型连接处理诺亚建议与翻译辅助。" })}</li>
+              <li>{T({ ko: "Loreguard가 운영 환경에 등록한 모델 연결을 통해 노아 제안과 번역 보조를 처리합니다.", en: "Noa suggestions and translation assistance run through model connections configured by Loreguard.", ja: "Loreguard が運用環境に設定したモデル接続を利用します。", zh: "通过 Loreguard 在运营环境中配置的模型连接处理诺亚建议与翻译辅助。" })}</li>
               <li>{T({ ko: "DGX/Qwen/vLLM은 내부 개발·비상 점검용 경로이며, 기본 처리 경로가 아닙니다.", en: "DGX/Qwen/vLLM is an internal development and emergency-check path, not the default processing path.", ja: "DGX/Qwen/vLLM は内部開発・非常時確認用であり、既定の処理経路ではありません。", zh: "DGX/Qwen/vLLM 是内部开发和应急检查路径，并非默认处理路径。" })}</li>
             </ul>
           </div>
@@ -117,7 +117,7 @@ export default function AiDisclosurePage() {
        v
   [Loreguard 화면 / Frontend]
        |
-       +---(2a) 로어가드 운영 경로 ---> [api.ehuniverse.com] --> [Configured provider API]
+       +---(2a) Loreguard 운영 경로 ---> [api.ehuniverse.com] --> [Configured provider API]
        |                                                           ^ 제공사 정책 적용
        |
        +---(2b) 로컬·개발 점검 경로 ---> [OpenAI-compatible vLLM] --> [Qwen on DGX]
@@ -147,7 +147,7 @@ export default function AiDisclosurePage() {
             })}
           </li>
           <li>
-            <strong>{T({ ko: "로어가드 운영 경로 / 사용자 연결 키:", en: "Loreguard managed path / user connection key:", ja: "Loreguard 運用経路 / 利用者接続キー:", zh: "Loreguard 托管路径 / 用户连接密钥：" })}</strong>{" "}
+            <strong>{T({ ko: "Loreguard 운영 경로 / 사용자 연결 키:", en: "Loreguard managed path / user connection key:", ja: "Loreguard 運用経路 / 利用者接続キー:", zh: "Loreguard 托管路径 / 用户连接密钥：" })}</strong>{" "}
             {T({
               ko: "각 제공사 정책에 따릅니다. 유료 API 계정은 기본적으로 재학습에 사용되지 않으나, 무료 요금제 또는 소비자향 서비스는 정책이 다를 수 있으므로 반드시 제공사 약관을 확인해 주세요.",
               en: "follow each provider's policy. Paid API accounts are typically excluded from retraining, but free tiers or consumer products may differ. Always verify the provider's terms.",
@@ -175,7 +175,7 @@ export default function AiDisclosurePage() {
         <div className="space-y-3 text-text-secondary text-sm leading-relaxed">
           <p>
             {T({
-              ko: "제품 화면에서 노아는 작업 조력자 이름으로 표시됩니다. 내부적으로는 사용자가 고른 제공사, 연결 키, 로컬 서버, 또는 로어가드 운영 경로를 통해 요청이 처리될 수 있습니다.",
+              ko: "제품 화면에서 노아는 작업 조력자 이름으로 표시됩니다. 내부적으로는 사용자가 고른 제공사, 연결 키, 로컬 서버, 또는 Loreguard 운영 경로를 통해 요청이 처리될 수 있습니다.",
               en: "In the product UI, Noa is the work assistant name. Internally, requests may be processed through the provider selected by the user, a BYOK key, a local server, or an app-managed path.",
               ja: "製品画面ではノアは作業支援者名として表示されます。",
               zh: "在产品界面中，Noa 是工作助手名称。",

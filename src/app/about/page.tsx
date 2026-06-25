@@ -3,6 +3,7 @@
 import Header from "@/components/Header";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { SUPPORT_EMAIL, HAS_SUPPORT_EMAIL, supportMailtoHref } from "@/lib/public-contact";
 
 export default function AboutPage() {
   const { lang } = useLang();
@@ -32,7 +33,7 @@ export default function AboutPage() {
                 })}
               </p>
               <p className="font-[--font-document] text-sm text-text-tertiary italic">
-                &ldquo;{T({ ko: "작품의 방향은 작가가 잡고, 과정은 로어가드가 정리합니다.", en: "The author directs the work, and Loreguard organizes the process." })}&rdquo;
+                &ldquo;{T({ ko: "작품의 방향은 작가가 잡고, 과정은 Loreguard가 정리합니다.", en: "The author directs the work, and Loreguard organizes the process." })}&rdquo;
               </p>
             </section>
 
@@ -81,15 +82,17 @@ export default function AboutPage() {
                     en: "The Loreguard app is proprietary and commercially managed. Public guides and sample materials follow the separate terms marked in their files or documents.",
                   })}
                 </p>
+                {HAS_SUPPORT_EMAIL && (
                 <p className="text-xs text-text-tertiary">
                   {T({ ko: "라이선스 문의: ", en: "License inquiries: " })}
                   <a
-                    href="mailto:gilheumpark@gmail.com"
+                    href={supportMailtoHref()}
                     className="inline-flex min-h-11 items-center rounded px-1 text-accent-amber underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue"
                   >
-                    gilheumpark@gmail.com
+                    {SUPPORT_EMAIL}
                   </a>
                 </p>
+                )}
               </div>
             </section>
 

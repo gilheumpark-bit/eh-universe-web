@@ -21,7 +21,7 @@ const TAGLINES: Record<Lang, { main: string; sub: string; footer: string; brand:
     main: "창작 전문 IDE",
     sub: "프로젝트 · 세계관 · 씬시트 · 집필 · 퇴고 · 출고",
     footer: "기획 · 집필 · 번역 · 과정기록 · 출고 패키지",
-    brand: "Loreguard · 로어가드",
+    brand: "Loreguard",
   },
   en: {
     main: "Creative IDE",

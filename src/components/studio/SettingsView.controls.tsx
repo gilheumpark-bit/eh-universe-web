@@ -132,7 +132,7 @@ export function InstallAppSection({ language }: { language: AppLanguage }) {
         title={
           state === 'installed'
             ? L4(language, { ko: '설치됨 — 앱 모드 실행 중', en: 'Installed — running in app mode', ja: 'インストール済み — アプリモードで実行中', zh: '已安装 — 正以应用模式运行' })
-            : L4(language, { ko: '로어가드를 앱으로 설치 (PWA)', en: 'Install Loreguard as an app (PWA)', ja: 'ロアガードをアプリとしてインストール (PWA)', zh: '将 Loreguard 安装为应用 (PWA)' })
+            : L4(language, { ko: 'Loreguard를 앱으로 설치 (PWA)', en: 'Install Loreguard as an app (PWA)', ja: 'ロアガードをアプリとしてインストール (PWA)', zh: '将 Loreguard 安装为应用 (PWA)' })
         }
         description={
           state === 'installed'

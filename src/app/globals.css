@@ -810,7 +810,8 @@ html[data-blue-light="on"][data-eye-strain-level="2"] {
    ============================================================ */
 .lg-cookie-work-surface {
   position: fixed;
-  right: 12px;
+  left: 12px;
+  right: auto;
   top: auto;
   bottom: max(10px, calc(env(safe-area-inset-bottom) + 10px));
   z-index: 60;

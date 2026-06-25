@@ -112,7 +112,7 @@ export default function CopyrightPage() {
         </h2>
         <p className="text-text-secondary text-sm leading-relaxed">
           {T({
-            ko: "Loreguard의 로컬·개발용 DGX/Qwen 경로를 별도로 사용하는 경우에도 사용자의 원고·세계관·캐릭터·번역 결과를 모델 재학습 데이터로 사용하지 않습니다. 로어가드 운영 경로와 사용자가 직접 연결한 외부 제공사의 학습 정책은 /ai-disclosure 문서를 확인해 주세요.",
+            ko: "Loreguard의 로컬·개발용 DGX/Qwen 경로를 별도로 사용하는 경우에도 사용자의 원고·세계관·캐릭터·번역 결과를 모델 재학습 데이터로 사용하지 않습니다. Loreguard 운영 경로와 사용자가 직접 연결한 외부 제공사의 학습 정책은 /ai-disclosure 문서를 확인해 주세요.",
             en: "Even when Loreguard's local/development DGX/Qwen path is explicitly used, user manuscripts, world-building, characters, and translation output are not used as model retraining data. See /ai-disclosure for server-side developer API and user-connected provider policies.",
             ja: "Loreguard のローカル・開発用 DGX/Qwen 経路が明示的に使われる場合でも、利用者作品をモデル再学習には使用しません。外部提供者の学習方針は /ai-disclosure を確認してください。",
             zh: "即使明确使用 Loreguard 的本地/开发 DGX/Qwen 路径，也不会将用户作品用于模型再训练。服务端开发 API 及用户连接提供商的训练政策请参阅 /ai-disclosure。",

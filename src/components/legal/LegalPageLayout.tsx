@@ -116,7 +116,7 @@ export default function LegalPageLayout({
                 </div>
                 <p>
                   {T({
-                    ko: "제품 화면의 ‘연결 키’는 법적 문서에서 API 키 또는 BYOK로도 표시됩니다. 모두 사용자가 선택한 외부 모델 계정을 로어가드에 연결하는 방식을 뜻하며, 앱이 법적 보증이나 저작권 대리를 제공한다는 의미는 아닙니다.",
+                    ko: "제품 화면의 ‘연결 키’는 법적 문서에서 API 키 또는 BYOK로도 표시됩니다. 모두 사용자가 선택한 외부 모델 계정을 Loreguard에 연결하는 방식을 뜻하며, 앱이 법적 보증이나 저작권 대리를 제공한다는 의미는 아닙니다.",
                     en: "In legal documents, the product term “connection key” may also appear as API key or BYOK. They all mean connecting a user-selected external model account to Loreguard; they do not imply legal warranty or copyright representation.",
                     ja: "製品画面の「接続キー」は、法的文書ではAPIキーまたはBYOKとも表記されます。いずれも利用者が選んだ外部モデルアカウントをLoreguardに接続する方式を意味し、法的保証や著作権代理を意味しません。",
                     zh: "产品界面的“连接密钥”在法律文档中也可能称为 API 密钥或 BYOK。它们都指用户选择的外部模型账户接入 Loreguard 的方式，并不表示法律担保或版权代理。",

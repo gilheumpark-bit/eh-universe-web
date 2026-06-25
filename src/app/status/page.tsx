@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react";
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
+import { SUPPORT_EMAIL, HAS_SUPPORT_EMAIL, supportMailtoHref } from "@/lib/public-contact";
 
 // ============================================================
 // PART 1: Types
@@ -98,12 +99,12 @@ export default function StatusPage() {
   })();
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-20">
+    <main className="mx-auto flex min-h-[70vh] max-w-2xl flex-col justify-center px-6 py-20">
       <h1 className="mb-2 font-[--font-mono] text-xs uppercase tracking-widest text-text-tertiary">
         {T({ ko: "서비스 상태", en: "Service Status", ja: "サービス状態", zh: "服务状态" })}
       </h1>
       <h2 className="mb-8 text-3xl font-bold text-text-primary">
-        {T({ ko: "로어가드 스튜디오", en: "Loreguard Studio", ja: "ロアガード", zh: "Loreguard" })}
+        {T({ ko: "Loreguard 스튜디오", en: "Loreguard Studio", ja: "ロアガード", zh: "Loreguard" })}
       </h2>
 
       <section
@@ -172,17 +173,19 @@ export default function StatusPage() {
             {" · "}
             {T({ ko: "장애 공지 + 사용자 보고", en: "incident announcements + user reports" })}
           </li>
+          {HAS_SUPPORT_EMAIL && (
           <li>
             <a
-              href="mailto:gilheumpark@gmail.com"
+              href={supportMailtoHref()}
               className="inline-flex min-h-[44px] min-w-11 items-center rounded px-1 py-3 text-accent-amber underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue"
               style={{ minHeight: 44 }}
             >
-              gilheumpark@gmail.com
+              {SUPPORT_EMAIL}
             </a>
             {" · "}
             {T({ ko: "긴급 연락", en: "urgent contact" })}
           </li>
+          )}
         </ul>
       </section>
     </main>

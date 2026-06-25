@@ -375,7 +375,7 @@ export default function LoreguardShell({
   return (
     <div className="eh-app" data-theme={resolvedTheme} data-genre-tone={normalizedGenreTone}>
       <header className="eh-header">
-        {active !== "project" && <h1 className="sr-only">로어가드 {activePageTitle}</h1>}
+        {active !== "project" && <h1 className="sr-only">Loreguard {activePageTitle}</h1>}
         {/* brand */}
         <button
           type="button"

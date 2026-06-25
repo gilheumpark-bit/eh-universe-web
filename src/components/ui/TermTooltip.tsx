@@ -70,7 +70,7 @@ const TERM_DEFINITIONS: Record<string, { ko: string; en: string; ja: string; zh:
     zh: '检索辅助 — 当前不会自动注入创作写作路径的旧版辅助方式',
   },
   '연결 키': {
-    ko: '연결 키 — 사용자가 가진 모델 계정을 로어가드에 연결하는 방식',
+    ko: '연결 키 — 사용자가 가진 모델 계정을 Loreguard에 연결하는 방식',
     en: 'Connection keys — connect your own model account to Loreguard',
     ja: '接続キー — 自分のモデルアカウントをLoreguardに接続する方式',
     zh: '连接密钥 — 将自己的模型账户连接到 Loreguard',

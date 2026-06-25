@@ -2,6 +2,7 @@
 
 import { Check } from "lucide-react";
 import { LOREGUARD_PLANS } from "@/lib/billing/loreguard-plans";
+import { SUPPORT_EMAIL, HAS_SUPPORT_EMAIL, supportMailtoHref } from "@/lib/public-contact";
 import type { Lang } from "@/lib/LangContext";
 import {
   CHECKOUT_UI_ENABLED,
@@ -19,7 +20,7 @@ export function PricingHero({ T }: { T: Translator }) {
   return (
     <header className="text-center mb-12">
       <p className="text-xs font-semibold tracking-[0.18em] uppercase text-accent-blue mb-3">
-        {T({ ko: "로어가드 이용 안내", en: "Loreguard Access", ja: "Loreguard 利用案内", zh: "Loreguard 使用说明" })}
+        {T({ ko: "Loreguard 이용 안내", en: "Loreguard Access", ja: "Loreguard 利用案内", zh: "Loreguard 使用说明" })}
       </p>
       <h1 className="font-serif text-4xl md:text-5xl font-semibold tracking-tight mb-4">
         {T({ ko: "오디션 기간 사전 이용 안내", en: "Audition access guide", ja: "オーディション期間の利用案内", zh: "评审期间使用说明" })}
@@ -76,7 +77,7 @@ function PlanCard({
   const mailHref =
     tier.id === "free"
       ? "/welcome"
-      : `mailto:gilheumpark@gmail.com?subject=%5B${tier.subject}%5D`;
+      : supportMailtoHref(`[${tier.subject}]`) || "/welcome";
 
   return (
     <article className={`flex flex-col rounded-none border p-6 ${tier.highlight ? "border-accent-blue bg-accent-blue/5" : "border-border bg-bg-secondary/30"}`}>
@@ -218,7 +219,7 @@ export function PricingFaq({ T }: { T: Translator }) {
     },
     {
       q: T({ ko: "연결 키와 기본 운영은 어떻게 다른가요?", en: "How do connection keys differ from hosted operation?", ja: "接続キーと標準運用の違いは?", zh: "连接密钥与默认托管有什么区别?" }),
-      a: T({ ko: "연결 키는 본인이 가진 모델 계정을 로어가드에 연결하는 방식이고, 기본 운영은 로어가드가 준비한 노아 운영 경로를 쓰는 방식입니다. 연결 키와 로컬 연결은 계속 운영 모드로 남깁니다.", en: "Connection keys connect your own model account to Loreguard. Hosted operation uses the Noa route prepared by Loreguard. Connection-key and local connections remain available operating modes.", ja: "接続キーは自分のモデルアカウントをLoreguardに接続する方式で、標準運用はLoreguardが用意したノアルートを使う方式です。接続キーとローカル接続は運用モードとして残します。", zh: "连接密钥用于将您自己的模型账户接入 Loreguard，默认托管使用 Loreguard 准备的诺亚运行路径。连接密钥与本地连接仍作为运行模式保留。" }),
+      a: T({ ko: "연결 키는 본인이 가진 모델 계정을 Loreguard에 연결하는 방식이고, 기본 운영은 Loreguard가 준비한 노아 운영 경로를 쓰는 방식입니다. 연결 키와 로컬 연결은 계속 운영 모드로 남깁니다.", en: "Connection keys connect your own model account to Loreguard. Hosted operation uses the Noa route prepared by Loreguard. Connection-key and local connections remain available operating modes.", ja: "接続キーは自分のモデルアカウントをLoreguardに接続する方式で、標準運用はLoreguardが用意したノアルートを使う方式です。接続キーとローカル接続は運用モードとして残します。", zh: "连接密钥用于将您自己的模型账户接入 Loreguard，默认托管使用 Loreguard 准备的诺亚运行路径。连接密钥与本地连接仍作为运行模式保留。" }),
     },
     {
       q: T({ ko: "작품 데이터는 어디에 저장되나요?", en: "Where is my work stored?", ja: "作品データはどこに保存されますか?", zh: "作品数据存在哪里?" }),
@@ -226,7 +227,7 @@ export function PricingFaq({ T }: { T: Translator }) {
     },
     {
       q: T({ ko: "조직 플랜은 별도 대시보드인가요?", en: "Is the organization plan a separate dashboard?", ja: "組織プランは別ダッシュボードですか?", zh: "组织方案是单独后台吗?" }),
-      a: T({ ko: "별도 제품을 새로 여는 방식보다 로어가드 안의 그룹 워크스페이스로 운영합니다. 작품별 출고 현황, 검토 권한, 제출 패키지를 그룹 단위로 관리하는 방향입니다.", en: "It is designed as a group workspace inside Loreguard rather than a separate product, covering per-work release status, review roles, and submission packages.", ja: "別製品ではなく、Loreguard内のグループ作業場として運用します。作品別出稿状況、検討権限、提出パッケージを管理します。", zh: "它不是单独产品，而是 Loreguard 内的团队工作区，用于管理作品出库状态、审核权限与提交包。" }),
+      a: T({ ko: "별도 제품을 새로 여는 방식보다 Loreguard 안의 그룹 워크스페이스로 운영합니다. 작품별 출고 현황, 검토 권한, 제출 패키지를 그룹 단위로 관리하는 방향입니다.", en: "It is designed as a group workspace inside Loreguard rather than a separate product, covering per-work release status, review roles, and submission packages.", ja: "別製品ではなく、Loreguard内のグループ作業場として運用します。作品別出稿状況、検討権限、提出パッケージを管理します。", zh: "它不是单独产品，而是 Loreguard 内的团队工作区，用于管理作品出库状态、审核权限与提交包。" }),
     },
   ];
 
@@ -261,10 +262,14 @@ export function PricingFooter({ T }: { T: Translator }) {
         })}
       </p>
       <p className="mt-2 font-mono">
-        <a href="mailto:gilheumpark@gmail.com" className="inline-flex min-h-11 items-center rounded px-1 text-accent-blue underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue">
-          gilheumpark@gmail.com
-        </a>
-        {" · "}
+        {HAS_SUPPORT_EMAIL && (
+          <>
+            <a href={supportMailtoHref()} className="inline-flex min-h-11 items-center rounded px-1 text-accent-blue underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue">
+              {SUPPORT_EMAIL}
+            </a>
+            {" · "}
+          </>
+        )}
         <a href="/welcome" className="inline-flex min-h-11 items-center rounded px-1 text-accent-blue underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-accent-blue">
           {T({ ko: "지금 시작", en: "Start", ja: "開始", zh: "开始" })}
         </a>

@@ -206,7 +206,7 @@ export async function generateMetadata(): Promise<Metadata> {
     appleWebApp: {
       capable: true,
       statusBarStyle: "black-translucent",
-      title: "로어가드",
+      title: "Loreguard",
     },
     formatDetection: {
       telephone: false,
@@ -338,7 +338,7 @@ export default async function RootLayout({
   // noscript 문구는 HTML lang 과 맞춰 렌더. Skip navigation은 클라이언트 언어 전환을 따라간다.
   const noscriptCopy: Record<Lang, { headline: string; body: string }> = {
     ko: {
-      headline: "로어가드 (Loreguard)",
+      headline: "Loreguard",
       body: "이 사이트는 JavaScript가 필요합니다. 브라우저 설정에서 JavaScript를 활성화해주세요.",
     },
     en: {

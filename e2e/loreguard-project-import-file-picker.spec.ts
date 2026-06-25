@@ -72,7 +72,7 @@ test.describe("Loreguard project import file picker", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/studio", { waitUntil: "domcontentloaded", timeout: 45_000 });
 
-    await expect(page.getByRole("heading", { name: "로어가드 · 모바일 스케치" })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Loreguard · 모바일 스케치" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("heading", { name: "세계관 메모" })).toBeVisible();
     await expect(page.getByRole("button", { name: "PC 데스크톱 모드 전환" })).toBeVisible();
     await expect(page.locator('input[type="file"][accept=".txt,.md,.json,.docx,.hwpx,.pdf,.epub"]')).toHaveCount(0);

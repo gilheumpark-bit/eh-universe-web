@@ -91,7 +91,7 @@ export default function QuickStartModal({
       zh: "选择您的工作引擎",
     }),
     dgxTitle: L4(language, {
-      ko: "로어가드 기본 연결",
+      ko: "Loreguard 기본 연결",
       en: "Loreguard Built-in Engine",
       ja: "Loreguard 内蔵エンジン",
       zh: "Loreguard 自建引擎",

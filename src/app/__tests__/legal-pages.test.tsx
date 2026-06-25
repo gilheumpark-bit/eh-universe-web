@@ -37,11 +37,11 @@ describe('Privacy Page', () => {
     expect(container.textContent).toContain('Sentry');
   });
 
-  it('이메일 연락처 링크 존재', () => {
+  it('문의(Contact) 섹션 존재', () => {
     const PrivacyPage = require('../privacy/page').default;
     const { container } = render(<PrivacyPage />);
-    const email = container.querySelector('a[href="mailto:gilheumpark@gmail.com"]');
-    expect(email).not.toBeNull();
+    // [2026-06-25] 공개 연락 이메일 미확정(공백) — mailto 링크 대신 문의 섹션 존재만 검증.
+    expect(container.textContent).toMatch(/문의|Contact/);
   });
 
   it('문서 상태 안내 표시', () => {

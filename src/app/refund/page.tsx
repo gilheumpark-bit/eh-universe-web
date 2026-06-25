@@ -8,6 +8,7 @@
 import { useLang } from "@/lib/LangContext";
 import { L4 } from "@/lib/i18n";
 import LegalPageLayout from "@/components/legal/LegalPageLayout";
+import { SUPPORT_EMAIL_DISPLAY, HAS_SUPPORT_EMAIL, supportMailtoHref } from "@/lib/public-contact";
 
 const EFFECTIVE_DATE = "2026-06-15";
 
@@ -87,12 +88,14 @@ export default function RefundPage() {
         <h2 className="font-[--font-mono] text-sm font-bold text-accent-purple tracking-wider uppercase mb-4">
           6. {T({ ko: "문의", en: "Contact", ja: "お問い合わせ", zh: "联系方式" })}
         </h2>
+        {HAS_SUPPORT_EMAIL && (
         <p className="text-text-secondary text-sm leading-relaxed">
           Email:{" "}
-          <a href="mailto:gilheumpark@gmail.com" className="text-accent-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">
-            gilheumpark [at] gmail [dot] com
+          <a href={supportMailtoHref()} className="text-accent-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue rounded">
+            {SUPPORT_EMAIL_DISPLAY}
           </a>
         </p>
+        )}
       </section>
     </LegalPageLayout>
   );

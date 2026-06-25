@@ -150,8 +150,8 @@ export function StudioShellView({
             const desktopUrl = typeof window !== 'undefined' ? `${window.location.origin}/studio` : '';
             if (typeof navigator !== 'undefined' && navigator.share) {
               navigator.share({
-                title: '로어가드 · 창작 전문 IDE',
-                text: '로어가드 (Loreguard) · 창작 전문 IDE / 과정기록 지원 (데스크톱에서 열기)',
+                title: 'Loreguard · 창작 전문 IDE',
+                text: 'Loreguard · 창작 전문 IDE / 과정기록 지원 (데스크톱에서 열기)',
                 url: desktopUrl,
               }).catch(() => { /* user cancelled */ });
             } else if (typeof navigator !== 'undefined' && navigator.clipboard) {

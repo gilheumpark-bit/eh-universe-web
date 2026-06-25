@@ -273,7 +273,7 @@ function GitHubPatGuide({ language }: { language: AppLanguage }) {
           <LockKeyhole className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-blue" />
           <p className="text-[11px] text-text-secondary leading-relaxed">
             {L4(language, {
-              ko: '토큰은 이 브라우저에만 저장되고, 로어가드 서버로는 전송되지 않습니다. GitHub 호출은 브라우저에서 직접 실행돼요.',
+              ko: '토큰은 이 브라우저에만 저장되고, Loreguard 서버로는 전송되지 않습니다. GitHub 호출은 브라우저에서 직접 실행돼요.',
               en: 'The token is stored only in this browser and is not sent to Loreguard servers. All GitHub calls happen directly from your browser.',
               ja: 'トークンはこのブラウザにのみ保存され、ロアガードのサーバーには送信されません。GitHubへの通信はブラウザから直接行われます。',
               zh: '令牌仅保存在当前浏览器,不会发送至洛尔加德服务器。所有 GitHub 调用均由浏览器直接发起。',
