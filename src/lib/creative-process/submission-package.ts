@@ -51,6 +51,13 @@ import {
   getJurisdictionFormPack,
   type LocalePackId,
 } from './jurisdiction-form-pack';
+// [배선 수정 2026-06-25] 규제 준비도(EU AI Act·한국 AI기본법·CA SB942 등)는 완성·테스트된
+// evaluateRegulatoryProfiles 로 평가해야 한다. 기존엔 buildIpPackManifestArtifact 가
+// regulatoryReports:[] 를 하드코딩해 출고물에서 항상 누락(법적 준비도 0)이었다.
+import {
+  evaluateRegulatoryProfiles,
+  ALL_REGULATORY_PROFILE_IDS,
+} from './regulatory-profile';
 import {
   buildReleaseCreditPreview,
   RELEASE_CREDIT_POLICY_CHECKED_AT,
@@ -360,6 +367,7 @@ function buildIpPackManifestArtifact(input: {
   cert: ProcessCertificate;
   profileId: DistributionProfileId;
   view: CertificateView;
+  language: 'ko' | 'en';
   artifacts: readonly ArtifactDescriptor[];
   sources: readonly SourceRecord[];
   events: readonly CreativeEvent[];
@@ -378,6 +386,19 @@ function buildIpPackManifestArtifact(input: {
     content: '',
   };
 
+  // [배선 수정 2026-06-25] 규제 준비도 평가 1회 (반복 무관 — 입력 고정).
+  // artifactIds 로 c2pa-ready-manifest 등 산출물 존재를 hasC2paReady 가 검출한다.
+  const regulatoryReports = evaluateRegulatoryProfiles(
+    ALL_REGULATORY_PROFILE_IDS,
+    {
+      cert: input.cert,
+      sources: [...input.sources],
+      events: [...input.events],
+      artifactIds: input.artifacts.map((descriptor) => descriptor.id),
+    },
+    input.language,
+  );
+
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const manifest = buildIpPackManifest({
       cert: input.cert,
@@ -386,7 +407,7 @@ function buildIpPackManifestArtifact(input: {
       artifacts: [...input.artifacts, artifact],
       sources: input.sources,
       events: input.events,
-      regulatoryReports: [],
+      regulatoryReports,
       generatedBy: input.generatedBy,
       manifestStoreUri: input.manifestStoreUri,
       externalMaterialClusters: input.externalMaterialClusters,
@@ -612,6 +633,8 @@ export async function buildSubmissionPackage(
     cert: result.cert,
     profileId: input.profileId,
     view,
+    // regulatory-profile 은 ko/en 만 — CertificateLanguage(ja/zh) 는 en 으로 폴백(평가 로직은 언어 무관, 라벨만).
+    language: input.language === 'ko' ? 'ko' : 'en',
     artifacts,
     sources,
     events,

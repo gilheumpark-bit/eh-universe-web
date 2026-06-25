@@ -18,8 +18,6 @@ import {
   CATEGORY_COLOR,
   DEFAULT_COLOR,
   KEYBOARD_STEP,
-  VIEW_H,
-  VIEW_W,
   bindStudioTone,
   clamp01,
   cssEscape,

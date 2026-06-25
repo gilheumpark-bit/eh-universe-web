@@ -234,6 +234,23 @@ export {
   normalizePublicVerificationUrl,
 } from './public-verification-url';
 
+// ── Creative Rail (dual-rail IP/저작 분류 — Phase 1 토대) ──
+export {
+  classifyRail,
+  partitionEventsByRail,
+  type CreativeRail,
+  type RailClassifiable,
+} from './rail';
+
+// ── Registry Contract (certHash canonical — register/verify 대조 기준) ──
+// [Phase 0 회귀 수정 2026-06-25] issue.ts 가 register body 의 certHash 를
+// 반드시 computeCertHash(cert) 로 보내야 verify/route.ts:370 의 재계산과 일치한다.
+// 기존엔 certHtmlHash(SHA-256 html)를 보내 정직 발급 cert 도 항상 certHash mismatch 였다.
+export {
+  buildCertHashPayload,
+  computeCertHash,
+} from './registry-contract';
+
 export {
   buildC2paReadyManifest,
   buildC2paPreparationNote,

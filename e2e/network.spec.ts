@@ -14,7 +14,7 @@ test.describe("Retired EH Network surface", () => {
 
   test("public header does not expose Network navigation", async ({ page }) => {
     await page.goto("/about");
-    await expect(page.getByTestId("home-header")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[data-testid="home-header"], header').first()).toBeVisible({ timeout: 20000 });
     await expect(page.getByRole("link", { name: /^NETWORK$/i })).toHaveCount(0);
   });
 

@@ -65,7 +65,7 @@ export function useStudioCommandPaletteActions({
           break;
         }
         window.dispatchEvent(new Event('noa:translate-current'));
-        window.open(`/translation-studio?from=${encodeURIComponent(currentSessionId)}`, '_blank', 'noopener');
+        window.open(`/translation-studio?from=${encodeURIComponent(currentSessionId)}`, '_blank', 'noopener,noreferrer');
         break;
       }
       case 'toggle-assistant':

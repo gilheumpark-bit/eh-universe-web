@@ -52,6 +52,10 @@ export {
   Pin,
   Wand2 as Wand,
   Quote,
+  Asterisk, // 원고 도구 — 장면 전환 표식
+  Minus, // 원고 도구 — 구분선
+  IndentDecrease, // 원고 도구 — 내어쓰기
+  IndentIncrease, // 원고 도구 — 들여쓰기
   Layers,
   ScrollText as Scroll, // 창작 과정 확인서 (구 NovelIDELauncher journal 탭과 동일 모티프)
   StickyNote, // 메모 보드 slide-over (MemoPanel — Z1c-mid-ports)

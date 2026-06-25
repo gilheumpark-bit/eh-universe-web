@@ -7,6 +7,7 @@ import type {
   RefObject,
 } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Quote, Asterisk, Minus, IndentDecrease, IndentIncrease } from "@/components/loreguard/icons";
 import { InlineActionPopup, type ReplaceRangeInfo } from "@/components/studio/InlineActionPopup";
 import {
   applyIndentToLineRange,
@@ -197,7 +198,7 @@ export default function TabWritingEditorSurface({
             title={L4(language, { ko: "선택 문장을 「 」로 감쌉니다.", en: "Wrap the selection in quotes." })}
             onClick={() => applyTextOperation(applyWrapToRange(text, selectionRange(), "「", "」"))}
           >
-            「」
+            <Quote size={15} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -206,7 +207,7 @@ export default function TabWritingEditorSurface({
             title={L4(language, { ko: "커서 위치에 장면 전환 표식을 넣습니다.", en: "Insert a scene break at the cursor." })}
             onClick={() => insertAtCursor("\n\n* * *\n\n")}
           >
-            ***
+            <Asterisk size={15} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -215,7 +216,7 @@ export default function TabWritingEditorSurface({
             title={L4(language, { ko: "커서 위치에 구분선을 넣습니다.", en: "Insert a divider at the cursor." })}
             onClick={() => insertAtCursor("\n\n────────────────\n\n")}
           >
-            --
+            <Minus size={15} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -224,7 +225,7 @@ export default function TabWritingEditorSurface({
             title={L4(language, { ko: "선택 줄의 들여쓰기를 줄입니다.", en: "Reduce indentation for selected lines." })}
             onClick={() => applyTextOperation(applyIndentToLineRange(text, selectionRange(), "out"))}
           >
-            ⇤
+            <IndentDecrease size={15} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -233,7 +234,7 @@ export default function TabWritingEditorSurface({
             title={L4(language, { ko: "선택 줄을 들여씁니다.", en: "Indent selected lines." })}
             onClick={() => applyTextOperation(applyIndentToLineRange(text, selectionRange(), "in"))}
           >
-            ⇥
+            <IndentIncrease size={15} aria-hidden="true" />
           </button>
           <button
             type="button"

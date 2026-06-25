@@ -54,7 +54,6 @@ type ChatCanvasDockViewProps = {
 };
 
 function ChatDockHeader({
-  dockTitle,
   handleClear,
   language,
   loading,
@@ -62,7 +61,7 @@ function ChatDockHeader({
   panelId,
   roleMode,
   toggleOpen,
-}: Pick<ChatCanvasDockViewProps, "dockTitle" | "handleClear" | "language" | "loading" | "messages" | "panelId" | "roleMode" | "toggleOpen">) {
+}: Pick<ChatCanvasDockViewProps, "handleClear" | "language" | "loading" | "messages" | "panelId" | "roleMode" | "toggleOpen">) {
   return (
     <div className="lg-chatdock-head">
       <div className="wd-chat-title lg-chatdock-title">

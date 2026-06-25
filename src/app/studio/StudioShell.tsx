@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, type Dispatch, type SetStateAction } from 'react';
 import { usePathname } from 'next/navigation';
-import type { AppLanguage, AppTab, WritingMode } from '@/lib/studio-types';
+import type { AppLanguage, WritingMode } from '@/lib/studio-types';
 import { createT } from '@/lib/i18n';
 import { useLang } from '@/lib/LangContext';
 import { useAuth } from '@/lib/AuthContext';

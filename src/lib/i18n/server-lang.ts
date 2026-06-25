@@ -4,7 +4,7 @@
  * Next.js 16 의 LayoutProps 타입에서 searchParams 가 제거됨.
  * 기존 layout.tsx 의 generateMetadata 가 searchParams 로 lang 분기 → 컴파일 에러.
  *
- * 해결: cookie 'lang' → accept-language header → 'ko' default 우선순위.
+ * 해결: cookie 'eh-lang' → accept-language header → 'ko' default 우선순위.
  * layout level 에서 안전하게 사용자 언어 검출.
  *
  * 사용:
@@ -31,16 +31,18 @@ function isSupported(v: string): v is SupportedLang {
 
 /**
  * Layout/page 의 generateMetadata 에서 사용자 lang 검출.
- * 우선순위: cookie 'lang' → accept-language header → 'ko' default.
+ * 우선순위: cookie 'eh-lang' → accept-language header → 'ko' default.
  *
  * Next.js 16 에서 layout 의 generateMetadata 는 searchParams 를 받지 못한다.
  * Query param ?lang=xx 로 SSR 분기를 원한다면 page.tsx 의 generateMetadata 사용.
  */
 export async function detectServerLang(): Promise<SupportedLang> {
   // 1) cookie 우선 — 사용자 명시 선택
+  //    [버그 수정 2026-06-25] 쿠키명은 'eh-lang' (LangContext.tsx:28·layout.tsx:107 과 동일).
+  //    기존 'lang' 은 클라가 쓰지 않는 키라 항상 부재 → 사용자 언어선택 무시·accept-language/ko 로 폴백.
   try {
     const cookieStore = await cookies();
-    const cookieLang = cookieStore.get('lang')?.value;
+    const cookieLang = cookieStore.get('eh-lang')?.value;
     if (cookieLang && isSupported(cookieLang)) {
       return cookieLang;
     }

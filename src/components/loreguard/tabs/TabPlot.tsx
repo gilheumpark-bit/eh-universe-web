@@ -110,7 +110,6 @@ export default function TabPlot() {
 
   const {
     expanded,
-    setExpanded,
     aiBusy,
     aiError,
     aiSuggestions,

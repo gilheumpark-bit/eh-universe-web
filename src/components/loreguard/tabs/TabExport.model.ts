@@ -272,13 +272,12 @@ export function useTabExportModel({
       }));
   }, [overseasReleaseReviewRow]);
   const openJurisdictionPackPreview = useCallback(() => {
-    const previewWindow = window.open("", "_blank", "width=1100,height=900");
+    const previewWindow = window.open("", "_blank", "width=1100,height=900,noopener,noreferrer");
     if (!previewWindow) {
       setJurisdictionPreviewNotice("새 창이 열리지 않았습니다. 브라우저의 팝업 허용 뒤 다시 열어 주세요.");
       return;
     }
 
-    previewWindow.opener = null;
     previewWindow.document.open();
     previewWindow.document.write(buildJurisdictionPackPreviewHtml({
       formRows: jurisdictionFormRows,

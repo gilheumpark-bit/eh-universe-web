@@ -22,7 +22,6 @@ import { computeTemperature, getTemperatureOverride } from '@/lib/temperature-se
 import { buildWritingContextPack } from '@/lib/writing-workspace/context-pack';
 import { assembleNoaPrompt } from '@/lib/writing-workspace/noa-prompt-assembly';
 import {
-  attachDraftJournal,
   buildComplianceGatePatch,
   buildAdvancedPrefix,
   buildExternalCraftLeakNotice,

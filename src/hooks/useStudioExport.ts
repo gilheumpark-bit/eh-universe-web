@@ -491,7 +491,7 @@ export function useStudioExport({
         const prefix = m.role === 'user' ? '\u{1F4DD} ' : '\u{1F916} ';
         return `<div style="margin-bottom:24px;"><strong>${prefix}${escHtml(m.role.toUpperCase())}</strong><div style="white-space:pre-wrap;font-family:serif;line-height:1.8;margin-top:8px;">${escHtml(m.content)}</div></div>`;
       }).join('<hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">');
-    const w = window.open('', '_blank');
+    const w = window.open('', '_blank', 'noopener,noreferrer');
     if (!w) return;
     w.document.write(`<html><head><title>${escHtml(session.title)}</title><style>body{max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;color:#333;}@media print{body{margin:0;}}</style></head><body><h1>${escHtml(session.title)}</h1><p style="color:#888;">${escHtml(session.config.genre)} | EP.${session.config.episode} | ${new Date().toLocaleDateString()}${isEditMode ? ` | ${language === 'KO' ? '수동 편집' : 'Manual Edit'}` : ''}</p><hr>${printContent}</body></html>`);
     w.document.close();

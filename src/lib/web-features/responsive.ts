@@ -55,7 +55,7 @@ export function printContent(elementId?: string): void {
   if (elementId) {
     const el = document.getElementById(elementId);
     if (!el) return;
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
     if (!printWindow) return;
 
     // [P17 풀점검 루프 3] document.write + innerHTML 제거.

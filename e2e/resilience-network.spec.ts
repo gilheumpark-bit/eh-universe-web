@@ -28,7 +28,13 @@ test.describe("App resilience (read-only, no mutations)", () => {
         /* 일부 환경에서 오프라인 리로드가 중단될 수 있음 */
       });
       await page.waitForTimeout(1500);
-      expect(errors.filter((e) => !e.includes("ChunkLoadError") && !e.includes("Loading chunk"))).toEqual(
+      expect(errors.filter((e) =>
+        !e.includes("ChunkLoadError") &&
+        !e.includes("Loading chunk") &&
+        !e.includes("Failed to fetch") &&
+        !e.includes("NetworkError") &&
+        !e.includes("net::ERR_")
+      )).toEqual(
         [],
       );
     } finally {

@@ -1,6 +1,11 @@
-import { ChevronL, ChevronR, Pen, Plus, Sparkle } from "@/components/loreguard/icons";
+import { useState } from "react";
+import { Chevron, ChevronL, ChevronR, Pen, Plus, Sparkle } from "@/components/loreguard/icons";
 import { L4 } from "@/lib/i18n";
 import type { AppLanguage } from "@/lib/studio-types";
+import { isCollapsed, loadCollapse, saveCollapse, toggleCollapse } from "@/lib/writing-workspace/collapse-state";
+
+/** "오늘 작업" 보드 접힘 상태 영속 키 (collapse-state v1 맵 내). */
+const PRODUCTION_COLLAPSE_KEY = "wr-production-board";
 
 type Tone = "green" | "amber" | "blue" | "gray";
 
@@ -99,10 +104,75 @@ export function WritingProductionBoard({
   onNoaSuggestion: () => void;
   onNextEpisode: () => void;
 }) {
+  // lazy init — studio는 ssr:false라 첫 렌더부터 localStorage 안전(hydration 불일치 없음).
+  const [collapsed, setCollapsed] = useState(() => isCollapsed(loadCollapse(), PRODUCTION_COLLAPSE_KEY));
+  const toggleBoard = () => {
+    const next = toggleCollapse(loadCollapse(), PRODUCTION_COLLAPSE_KEY);
+    saveCollapse(next);
+    setCollapsed(isCollapsed(next, PRODUCTION_COLLAPSE_KEY));
+  };
+
+  const toggleBtn = (
+    <button
+      type="button"
+      className="mini-btn wr-production-toggle"
+      onClick={toggleBoard}
+      aria-expanded={!collapsed}
+      aria-label={
+        collapsed
+          ? L4(language, { ko: "오늘 작업 펼치기", en: "Expand today's work" })
+          : L4(language, { ko: "오늘 작업 접기", en: "Collapse today's work" })
+      }
+      title={
+        collapsed
+          ? L4(language, { ko: "오늘 작업 펼치기", en: "Expand" })
+          : L4(language, { ko: "오늘 작업 접기", en: "Collapse" })
+      }
+    >
+      <Chevron size={14} />
+    </button>
+  );
+
+  const actions = (
+    <div className="wr-production-actions">
+      <button type="button" className="mini-btn ok" onClick={onFocusDraft}>
+        <Pen size={13} />
+        {L4(language, { ko: "계속 쓰기", en: "Keep writing" })}
+      </button>
+      <button type="button" className="mini-btn" onClick={onNoaSuggestion}>
+        <Sparkle size={13} />
+        {L4(language, { ko: "노아 제안", en: "Noa suggestion" })}
+      </button>
+      <button type="button" className="mini-btn" onClick={onNextEpisode} disabled={!canNextEpisode}>
+        <Plus size={13} />
+        {L4(language, { ko: "다음 회차", en: "Next episode" })}
+      </button>
+    </div>
+  );
+
+  const boardLabel = L4(language, { ko: "오늘 집필 작업 상태", en: "Today's writing work status" });
+
+  // 접힘: 에디터에 세로 공간을 내주기 위해 한 줄 요약만 (kicker · 다음할일 · 진행%) + 액션.
+  if (collapsed) {
+    return (
+      <div className="wr-production-board is-collapsed" aria-label={boardLabel}>
+        {toggleBtn}
+        <div className="wr-production-collapsed">
+          <span className={"rdot " + nextStep.tone} />
+          <span className="wr-production-collapsed-kicker">{L4(language, { ko: "오늘 작업", en: "Today" })}</span>
+          <b className="wr-production-collapsed-title">{nextStep.label}</b>
+          <span className="wr-production-collapsed-pct">{progressPct}%</span>
+        </div>
+        {actions}
+      </div>
+    );
+  }
+
   return (
-    <div className="wr-production-board" aria-label={L4(language, { ko: "오늘 집필 작업 상태", en: "Today's writing work status" })}>
+    <div className="wr-production-board" aria-label={boardLabel}>
       <div className="wr-production-main">
         <div className="wr-production-kicker">
+          {toggleBtn}
           <span className={"rdot " + nextStep.tone} />
           {L4(language, { ko: "오늘 작업", en: "Today" })}
         </div>
@@ -128,20 +198,7 @@ export function WritingProductionBoard({
           </div>
         ))}
       </div>
-      <div className="wr-production-actions">
-        <button type="button" className="mini-btn ok" onClick={onFocusDraft}>
-          <Pen size={13} />
-          {L4(language, { ko: "계속 쓰기", en: "Keep writing" })}
-        </button>
-        <button type="button" className="mini-btn" onClick={onNoaSuggestion}>
-          <Sparkle size={13} />
-          {L4(language, { ko: "노아 제안", en: "Noa suggestion" })}
-        </button>
-        <button type="button" className="mini-btn" onClick={onNextEpisode} disabled={!canNextEpisode}>
-          <Plus size={13} />
-          {L4(language, { ko: "다음 회차", en: "Next episode" })}
-        </button>
-      </div>
+      {actions}
     </div>
   );
 }

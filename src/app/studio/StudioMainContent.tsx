@@ -7,7 +7,6 @@ import { useState, useEffect, useCallback, useMemo, type ComponentProps } from '
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { Key } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import type { AppTab } from '@/lib/studio-types';
 import { useStudioUIStore } from '@/store/studio-ui-store';
 import LoadingSkeleton from '@/components/studio/LoadingSkeleton';
 import StudioTabRouter from '@/components/studio/StudioTabRouter';

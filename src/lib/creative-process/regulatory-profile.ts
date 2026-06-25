@@ -26,6 +26,15 @@ export type RegulatoryProfileId =
   | 'platform-provenance'
   | 'authors-guild-evidence';
 
+/** 전체 규제 프로파일 ID — 출고 묶음(submission-package)이 전 관할 준비도를 일괄 평가할 때 사용. */
+export const ALL_REGULATORY_PROFILE_IDS: readonly RegulatoryProfileId[] = [
+  'eu-ai-act-article-50',
+  'kr-ai-basic-act',
+  'ca-sb942-ab853',
+  'platform-provenance',
+  'authors-guild-evidence',
+];
+
 export type RegulatoryRequirementSeverity = 'required' | 'recommended';
 
 export type RegulatoryReadinessStatus = 'ready' | 'needs-review' | 'not-ready';

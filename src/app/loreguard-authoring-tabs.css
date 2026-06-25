@@ -1141,7 +1141,7 @@
    제약(자식 flex 항목이 content 폭으로 부풀어 부모를 넘기는 것 차단). .wr-center 는
    flex:1;min-width:0 (아래) 라 바인더 폭을 흡수. .wr-panel 폭(--lg-rpanel-w)은 보존. */
 .eh-app .wr-grid { flex: 1; min-width: 0; min-height: 0; display: flex; overflow: hidden; }
-.eh-app .wr-center { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--page-2); overflow: hidden; }
+.eh-app .wr-center { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--card); overflow: hidden; }
 .eh-app .wr-top { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 28px 10px; }
 .eh-app .wr-title-block { min-width: 132px; display: grid; gap: 3px; }
 .eh-app .wr-title { font-size: 22px; font-weight: 850; letter-spacing: 0; white-space: nowrap; }
@@ -1414,16 +1414,30 @@
   align-items: center;
 }
 .eh-app .wr-doc { flex: 1; overflow: auto; padding: 22px 28px 120px; }
+/* [Quiet Page Pro 보강 2026-06-25] 무경계 종이: 테두리·그림자·그라데이션·좌측 28px 고정을
+   제거하고 measure(.wr-view-box margin:auto)로 광학 중심 정렬. genre 정체성은 좌측 2px
+   마진 라인(::before)으로 환생. textarea/컴포넌트 구조는 불변. */
 .eh-app .wr-doc.wr-manuscript-surface {
-  margin: 14px 28px 0;
-  padding: 30px 34px 104px;
-  border: 1px solid color-mix(in srgb, var(--genre-line) 46%, var(--line-soft));
-  border-radius: var(--r-lg);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--card) 96%, var(--genre-soft)) 0%, var(--card) 62%),
-    var(--card);
-  box-shadow: inset 4px 0 0 color-mix(in srgb, var(--genre-accent) 32%, transparent), 0 6px 18px rgba(31,36,80,.045);
+  position: relative;
+  margin: 8px auto 0;
+  padding: 28px 0 56px;
+  border: 0;
+  border-radius: 0;
+  background: var(--card);
+  box-shadow: none;
   line-height: var(--manuscript-line-height);
+}
+.eh-app .wr-doc.wr-manuscript-surface::before {
+  content: "";
+  position: absolute;
+  left: -22px;
+  top: 56px;
+  bottom: 56px;
+  width: 2px;
+  border-radius: 0;
+  background: var(--genre-accent);
+  opacity: .32;
+  pointer-events: none;
 }
 .eh-app .wr-manuscript-surface .wr-editor {
   caret-color: var(--primary);
@@ -1432,9 +1446,63 @@
   line-height: var(--manuscript-line-height);
 }
 .eh-app .wr-manuscript-surface .wr-editor::placeholder {
-  color: color-mix(in srgb, var(--ink-3) 76%, transparent);
+  color: color-mix(in srgb, var(--ink-3) 60%, transparent);
 }
 .eh-app .wr-read-mode .wr-production-board { display: none; }
+
+/* [집필 보드 접힘] 사용자 토글 — 접으면 한 줄 요약만 남기고 에디터에 세로 공간 양보 */
+.eh-app .wr-production-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 5px;
+  margin-right: 2px;
+  line-height: 0;
+}
+.eh-app .wr-production-toggle svg { transition: transform .15s ease; }
+.eh-app .wr-production-board.is-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  grid-template-columns: none;
+  padding: 8px 12px;
+}
+.eh-app .wr-production-board.is-collapsed .wr-production-toggle svg { transform: rotate(-90deg); }
+.eh-app .wr-production-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.eh-app .wr-production-collapsed-kicker {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.eh-app .wr-production-collapsed-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-1);
+  font-size: 14px;
+  font-weight: 750;
+}
+.eh-app .wr-production-collapsed-pct {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary, #2563eb);
+  font-weight: 700;
+}
+.eh-app .wr-production-board.is-collapsed .wr-production-actions {
+  flex: 0 0 auto;
+  margin: 0;
+}
 .eh-app .wr-read-mode .wr-composer {
   background: color-mix(in srgb, var(--card) 90%, var(--genre-soft));
 }

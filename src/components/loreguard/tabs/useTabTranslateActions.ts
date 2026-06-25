@@ -280,7 +280,7 @@ export function useTabTranslateActions(state: TabTranslateState) {
       .filter(Boolean);
     if (ordered.length === 0) return;
     const body = ordered.map((p) => `<p>${escapePreviewHtml(p)}</p>`).join("");
-    const w = window.open("", "_blank");
+    const w = window.open("", "_blank", "noopener,noreferrer");
     if (!w) return;
     const title = escapePreviewHtml((activeManuscript?.title ?? currentSession?.title ?? "Translation") + " · " + LANGS[lang].native);
     w.document.write(
