@@ -436,6 +436,12 @@ export default function LoreguardShell({
                   type="button"
                   className={"eh-lang-seg" + (selected ? " on" : "")}
                   aria-pressed={selected}
+                  aria-label={L4(language, {
+                    ko: `화면 언어: ${option.title}`,
+                    en: `Display language: ${option.title}`,
+                    ja: `表示言語: ${option.title}`,
+                    zh: `界面语言：${option.title}`,
+                  })}
                   title={L4(language, {
                     ko: `화면 언어: ${option.title}`,
                     en: `Display language: ${option.title}`,

@@ -468,6 +468,14 @@
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+.lg-settings-danger-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--c-red) 20%, var(--line));
+  background: color-mix(in srgb, var(--c-red-bg, #fff0f0) 18%, var(--card));
+}
 .lg-settings-surface {
   min-height: 100%;
   background: var(--page-2);

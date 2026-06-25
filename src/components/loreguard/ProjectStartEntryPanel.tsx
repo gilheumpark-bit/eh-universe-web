@@ -264,6 +264,7 @@ export function ProjectStartEntryPanel({
               <input
                 aria-label={L4(language, { ko: "노아 답변 작품명", en: "Noa answer work title", ja: "Noa回答 作品名", zh: "Noa 回答作品名" })}
                 value={draft.title}
+                maxLength={200}
                 onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
                 placeholder={L4(language, {
                   ko: "예: 회귀한 편집자의 마지막 원고",

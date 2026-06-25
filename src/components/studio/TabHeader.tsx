@@ -36,7 +36,8 @@ export function TabHeader({ icon, title, description, action, className = '' }: 
   }
 
   return (
-    <header
+    <div
+      role="presentation"
       className={`flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-bg-secondary/30 ${className}`}
     >
       <div className="flex items-center gap-2 min-w-0">
@@ -49,7 +50,7 @@ export function TabHeader({ icon, title, description, action, className = '' }: 
         </div>
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
-    </header>
+    </div>
   );
 }
 

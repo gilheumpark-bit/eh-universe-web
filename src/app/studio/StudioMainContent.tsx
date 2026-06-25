@@ -448,7 +448,7 @@ export default function StudioMainContent({ children }: { children?: React.React
             <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 bg-accent-amber/10 border border-accent-amber/30 rounded-xl text-accent-amber text-xs">
               <Key className="w-4 h-4 shrink-0" />
               <span className="flex-1">{apiBannerMessage}</span>
-              <button data-testid="btn-api-key" onClick={() => setShowApiKeyModal(true)} className="shrink-0 min-h-[44px] px-3 py-2 bg-accent-amber/20 hover:bg-accent-amber/30 rounded-lg text-[10px] font-bold uppercase transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue">
+              <button data-testid="btn-api-key" onClick={() => setShowApiKeyModal(true)} className="shrink-0 min-h-[44px] px-3 py-2 bg-accent-amber/8 hover:bg-accent-amber/15 rounded-lg text-[10px] font-bold uppercase transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue">
                 {apiSetupLabel}
               </button>
               <button onClick={() => { setBannerDismissed(true); try { localStorage.setItem('noa_api_banner_dismissed', '1'); } catch { /* quota/private */ } }} className="shrink-0 min-h-[44px] min-w-[44px] rounded-lg text-text-tertiary hover:text-text-primary hover:bg-bg-secondary transition-colors text-sm leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue" aria-label={language === 'KO' ? '닫기' : 'Dismiss'}>

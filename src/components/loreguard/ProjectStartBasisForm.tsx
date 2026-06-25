@@ -123,6 +123,7 @@ export function ProjectStartBasisForm({
               <input
                 data-testid="project-title-input"
                 value={draft.title}
+                maxLength={200}
                 onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
                 placeholder={L4(language, {
                   ko: "예: 회귀한 편집자의 마지막 원고",

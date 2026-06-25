@@ -326,7 +326,7 @@ export default function LoreguardStudio() {
                     type="button"
                     data-testid="btn-api-key"
                     onClick={() => setShowApiKeyModal(true)}
-                    className="min-h-[44px] rounded-xl bg-accent-amber/20 px-3 py-2 text-[10px] font-black uppercase tracking-wide text-accent-amber transition-colors hover:bg-accent-amber/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
+                    className="min-h-[44px] rounded-xl bg-accent-amber/8 px-3 py-2 text-[10px] font-black uppercase tracking-wide text-accent-amber transition-colors hover:bg-accent-amber/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue"
                   >
                     {apiSetupLabel}
                   </button>
