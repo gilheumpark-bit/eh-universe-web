@@ -178,13 +178,9 @@ export function useStudioShellActionRouting({
     onToggleFocus: () => setFocusMode(previous => !previous),
     onToggleShortcuts: () => setShowShortcuts(previous => !previous),
     onSave: () => {
-      void triggerSave().then((saved) => {
-        if (saved) {
-          window.dispatchEvent(new CustomEvent('noa:alert', {
-            detail: { message: language === 'KO' ? '저장 완료' : 'Saved', variant: 'info' },
-          }));
-        }
-      });
+      // [2026-06-26] 저장 성공 토스트 제거 — 헤더 eh-sync 표시("저장 중…→저장됨")가 이미
+      // 동일 피드백을 주므로 중복. 실패는 triggerSave 내부 noa:save-failed/alert 로 계속 노출.
+      void triggerSave();
     },
     onNewEpisode: () => {
       if (!currentSession) return;

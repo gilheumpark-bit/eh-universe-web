@@ -42,6 +42,8 @@ interface ToastItem {
 }
 
 const MAX_VISIBLE = 3;
+/** 동일 메시지 재발사 억제 창(ms) — 이 시간 내 같은 토스트는 스킵해 반복 노출을 줄인다. */
+const DEDUPE_MS = 6000;
 const DURATION: Record<ToastVariant, number> = {
   success: 4000,
   info: 4000,
@@ -98,6 +100,9 @@ export default function ToastHost({ language = "KO" }: { language?: string }) {
   const idRef = useRef(0);
   const timersRef = useRef<Map<number, TimerEntry>>(new Map());
   const pausedRef = useRef(false);
+  // [2026-06-26] 동일 토스트 throttle — 저장/동기화 피드백이 짧은 간격에 반복 발사돼
+  // "너무 자주 뜸"으로 느껴지는 문제 차단. 같은 (variant|message)가 DEDUPE_MS 내 재요청되면 무시.
+  const recentRef = useRef<Map<string, number>>(new Map());
 
   // ---- dismiss: 타이머 해제 + visible 제거 + 큐 승격 (단일 setState 로 race 차단)
   const dismiss = useCallback((id: number) => {
@@ -117,6 +122,18 @@ export default function ToastHost({ language = "KO" }: { language?: string }) {
   }, []);
 
   const push = useCallback((toast: Omit<ToastItem, "id">) => {
+    // 동일 (variant|message) 가 DEDUPE_MS 내 재요청되면 무시 — 저장/동기화 등 반복 토스트 억제.
+    const now = Date.now();
+    const dedupeKey = `${toast.variant}|${toast.message}`;
+    const lastAt = recentRef.current.get(dedupeKey);
+    if (lastAt != null && now - lastAt < DEDUPE_MS) return;
+    recentRef.current.set(dedupeKey, now);
+    // 맵 비대화 방지 — 만료 항목 정리.
+    if (recentRef.current.size > 64) {
+      for (const [k, ts] of recentRef.current) {
+        if (now - ts >= DEDUPE_MS) recentRef.current.delete(k);
+      }
+    }
     const id = ++idRef.current;
     setStack((s) =>
       s.visible.length < MAX_VISIBLE
