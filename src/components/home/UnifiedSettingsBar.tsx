@@ -35,6 +35,12 @@ export default function UnifiedSettingsBar() {
     ? (user.displayName || user.email || T({ ko: "로그아웃", en: "Sign out", ja: "ログアウト", zh: "登出" }))
     : T({ ko: "로그인", en: "Sign in", ja: "ログイン", zh: "登录" });
   const apiLabel = T({ ko: `연결 키${enabledSlots.length > 0 ? ` (${enabledSlots.length})` : ''}`, en: `Connection keys${enabledSlots.length > 0 ? ` (${enabledSlots.length})` : ''}`, ja: `接続キー${enabledSlots.length > 0 ? ` (${enabledSlots.length})` : ''}`, zh: `连接密钥${enabledSlots.length > 0 ? ` (${enabledSlots.length})` : ''}` });
+  // [로그인 게이팅] 구버전 플로우 복원 — 비로그인 시 연결 키 입력 대신 로그인을 먼저 유도.
+  const apiLockedLabel = T({ ko: "로그인 후 연결 키 등록", en: "Sign in to add connection keys", ja: "ログイン後に接続キーを登録", zh: "登录后添加连接密钥" });
+  const openApiKeys = () => {
+    if (!user) { void signInWithGoogle(); return; }
+    setShowApiKeys(true);
+  };
   const themeLabel = theme === "dark"
     ? T({ ko: "밤 모드", en: "Night mode", ja: "夜モード", zh: "夜间模式" })
     : T({ ko: "낮 모드", en: "Day mode", ja: "昼モード", zh: "日间模式" });
@@ -74,12 +80,12 @@ export default function UnifiedSettingsBar() {
           </button>
         )}
 
-        {/* Connection keys — icon only */}
+        {/* Connection keys — icon only. 비로그인 시 로그인 우선 유도(구버전 플로우). */}
         <button
-          onClick={() => setShowApiKeys(true)}
+          onClick={openApiKeys}
           className="relative inline-flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-border/50 bg-bg-secondary/60 backdrop-blur-sm text-text-secondary hover:border-accent-amber/40 hover:text-accent-amber transition-colors"
-          title={apiLabel}
-          aria-label={apiLabel}
+          title={user ? apiLabel : apiLockedLabel}
+          aria-label={user ? apiLabel : apiLockedLabel}
         >
           <Key className="w-4 h-4" />
           {enabledSlots.length > 0 && (

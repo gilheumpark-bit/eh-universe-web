@@ -24,6 +24,8 @@ import React, { useCallback, useEffect } from 'react';
 import { APIKeySlotManager } from '@/components/home/APIKeySlotManager';
 import { SaveSlotModal } from '@/components/studio/StudioModals';
 import { useModal, useModalOpen } from '@/lib/modals/modal-manager';
+import { useAuth } from '@/lib/AuthContext';
+import { L4 } from '@/lib/i18n';
 import { INITIAL_CONFIG } from '@/hooks/useProjectManager';
 // [풀점검 priority 6 — 2026-06-08] 절대금지 src/lib/studio-types.ts 직접 import 제거.
 // src/types/studio-shared.ts shim 을 경유 — 신규 컴포넌트는 절대 직접 의존 0.
@@ -72,13 +74,35 @@ export default function StudioModalBridge({
   setSaveSlotOpen,
 }: StudioModalBridgeProps): React.ReactElement | null {
   const { openModal, closeModal, replaceModal } = useModal();
+  const { user, signInWithGoogle } = useAuth();
   const isApiKeyOpen = useModalOpen('studio:api-keys');
   const isSaveSlotOpen = useModalOpen('studio:save-slot');
 
   // ── 단방향 sync: 부모 state → ModalProvider state ──
   // [C] 부모가 true 로 만들면 modal open. 이미 다른 modal 열려있으면 replace (UX 우선순위 부모 호출에 위임).
   // [G] 같은 state 일 때 noop — effect 가 중복 dispatch 안 함.
+  // [로그인 게이팅] 구버전 플로우 복원 — 비로그인 상태에서 연결 키 모달을 열려는 모든 경로
+  //   (설정 행·Quick Start·import·키 누락 시 자동 오픈)를 단일 chokepoint 에서 차단하고 로그인을 먼저 유도.
   useEffect(() => {
+    if (apiKeyOpen && !user) {
+      setApiKeyOpen(false);
+      try {
+        window.dispatchEvent(new CustomEvent('noa:toast', {
+          detail: {
+            message: L4(language, {
+              ko: "로그인 후 연결 키를 등록할 수 있습니다.",
+              en: "Sign in to add connection keys.",
+              ja: "ログイン後に接続キーを登録できます。",
+              zh: "登录后即可添加连接密钥。",
+            }),
+            variant: "info",
+          },
+        }));
+      } catch { /* best-effort toast */ }
+      try { void Promise.resolve(signInWithGoogle()).catch(() => { /* 로그인 취소/실패 — 토스트 이미 표시 */ }); }
+      catch { /* signIn 미가용 */ }
+      return;
+    }
     if (apiKeyOpen && !isApiKeyOpen) {
       // 이미 다른 modal 열림 → replace 로 강제 (legacy stacking guard 우선순위 반영).
       // payload 없는 modal — Record<string, never> 로 정의돼 빈 객체 전달.
@@ -86,7 +110,7 @@ export default function StudioModalBridge({
     } else if (!apiKeyOpen && isApiKeyOpen) {
       closeModal();
     }
-  }, [apiKeyOpen, isApiKeyOpen, replaceModal, closeModal]);
+  }, [apiKeyOpen, isApiKeyOpen, user, signInWithGoogle, setApiKeyOpen, language, replaceModal, closeModal]);
 
   useEffect(() => {
     if (saveSlotOpen && !isSaveSlotOpen) {

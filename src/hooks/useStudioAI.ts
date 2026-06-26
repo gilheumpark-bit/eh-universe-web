@@ -12,7 +12,8 @@ import { stripEngineArtifacts } from '@/engine/pipeline';
 import { getGenreTemperature } from '@/engine/genre-presets';
 import { buildStoryBible } from '@/engine/context-builder';
 import { VLLM_MODEL_ID } from '@/lib/dgx-models';
-import { hasDgxService } from '@/lib/ai-providers';
+import { hasDgxService, streamChat, type ChatMsg } from '@/lib/ai-providers';
+import { buildTabExpertSystemDirective, type LoreguardBrainTabId } from '@/lib/noa/tab-expert-registry';
 import { evaluateQuality, buildRetryHint } from '@/engine/quality-gate';
 import { loadProfile, buildProfileHint } from '@/engine/writer-profile';
 import { createT } from '@/lib/i18n';
@@ -48,6 +49,27 @@ import { useStudioAIRegenerate } from './useStudioAI.regenerate';
 import type { QualityGateAttemptRecord, UseStudioAIParams } from './useStudioAI.types';
 
 export { resolveNoaProjectScopeId } from './useStudioAI.helpers';
+
+// ============================================================
+// [2026-06-26 버그수정] 인터뷰 디렉티브 라우팅
+// world 탭(TabWorld.submit)·project 탭(ProjectStart.continueWithNoa)은 인터뷰/상담 의도를
+// '[세계관 설계]'·'[작품 기준선 만들기]' 태그로 표시하지만, 기존 handleSend 는 이 태그를 무시하고
+// 무조건 집필(manuscript) 파이프라인 + 원고 품질게이트 + 재시도 루프를 돌려 소설 본문이 출력됐다.
+// → 태그를 prefix-정확 매칭으로 감지해 tab-expert 인터뷰 디렉티브 + streamChat(chat 모드)로 우회한다.
+//   (character/plot/scene/direction 정상 탭이 쓰는 ChatCanvasDock consult 경로와 동치.)
+// prefix 정확 매칭: 작가가 본문 중간에 같은 문자열을 써도 오분기되지 않도록 입력 선두에서만 판정.
+const CONSULT_DIRECTIVES: ReadonlyArray<{ prefix: string; tab: LoreguardBrainTabId }> = [
+  { prefix: '[세계관 설계]', tab: 'world' },
+  { prefix: '[작품 기준선 만들기]', tab: 'world' },
+];
+
+export function detectConsultDirective(text: string): LoreguardBrainTabId | null {
+  const head = text.trimStart();
+  for (const d of CONSULT_DIRECTIVES) {
+    if (head.startsWith(d.prefix)) return d.tab;
+  }
+  return null;
+}
 
 /**
  * Core AI generation hook. Handles streaming story generation, HFCP turn processing,
@@ -183,6 +205,61 @@ export function useStudioAI({
     const capturedSessionId = currentSessionId;
     // 비동기 타이밍에 currentSession이 null일 수 있으므로 방어 체크
     if (!currentSession) { clearTimeout(timeoutIdRef.current); generationLockRef.current = false; setIsGenerating(false); return; }
+
+    // ── 인터뷰 디렉티브 라우팅 (world/project 소설-오출력 버그 수정 2026-06-26) ──
+    // '[세계관 설계]'·'[작품 기준선 만들기]' consult 디렉티브는 집필 파이프라인이 아니라
+    // tab-expert 인터뷰 디렉티브 + streamChat(chat 모드)로 흘린다. 원고 품질게이트·재시도 미적용.
+    const consultTab = detectConsultDirective(text);
+    if (consultTab) {
+      try {
+        const consultSystem = [
+          buildTabExpertSystemDirective(consultTab, language),
+          storyContextPrefix,
+        ].filter(Boolean).join('\n\n');
+        const consultHistory: ChatMsg[] = [
+          ...existingMessages.map((m) => ({ role: m.role, content: m.content }) as ChatMsg),
+          { role: 'user', content: text },
+        ];
+        await streamChat({
+          systemInstruction: consultSystem,
+          messages: consultHistory,
+          temperature: 0.7,
+          isChatMode: true,
+          signal: controller.signal,
+          onChunk: (chunk) => {
+            setSessions((prev) => prev.map((s) =>
+              s.id === capturedSessionId
+                ? { ...s, messages: s.messages.map((m) => m.id === aiMsgId ? { ...m, content: m.content + chunk } : m) }
+                : s,
+            ));
+          },
+        });
+        const elapsedSec = Math.round((performance.now() - generationStartRef.current) / 100) / 10;
+        setGenerationTime(elapsedSec);
+      } catch (error: unknown) {
+        if (error instanceof DOMException && error.name === 'AbortError') { /* user cancelled */ }
+        else {
+          const classified = classifyAsStudioError(error);
+          if (classified.code === StudioErrorCode.KEY_MISSING || classified.code === StudioErrorCode.KEY_INVALID) {
+            setShowApiKeyModal(true);
+          } else {
+            logger.error('StudioAI', classified);
+            setUxError({ error: classified, retry: isGenerationRetryable(classified) ? () => handleSend(text, undefined, undefined) : undefined });
+          }
+        }
+      } finally {
+        clearTimeout(timeoutIdRef.current);
+        clearTimeout(slowTimerRef.current);
+        clearTimeout(verySlowTimerRef.current);
+        clearTimeout(lockTimerRef.current);
+        generationLockRef.current = false;
+        setIsGenerating(false);
+        abortControllerRef.current = null;
+        trackAIGeneration('consult', String(consultTab), 'ai');
+      }
+      return;
+    }
+
     const capturedConfig = currentSession.config;
     const writerProfile = loadProfile('default');
     const pipelineGate = runStudioPipelineGate({
