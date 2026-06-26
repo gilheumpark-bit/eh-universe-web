@@ -11,6 +11,16 @@ import StudioModalBridge from '../StudioModalBridge';
 import { ModalProvider, useModal } from '@/lib/modals/modal-manager';
 import type { ChatSession } from '@/lib/studio-types';
 
+// [로그인 게이팅 2026-06-26] Bridge 가 useAuth 로 비로그인 시 키 모달을 차단한다.
+//   기존 테스트는 '로그인 사용자' 시나리오 → 기본 user 주입. 게이팅은 별도 테스트로 검증.
+const mockAuth: { user: unknown; signInWithGoogle: jest.Mock } = {
+  user: { uid: 'test-user' },
+  signInWithGoogle: jest.fn(),
+};
+jest.mock('@/lib/AuthContext', () => ({
+  useAuth: () => mockAuth,
+}));
+
 // Heavy modal 컴포넌트 stub — Bridge 의 sync 로직만 검증.
 jest.mock('@/components/home/APIKeySlotManager', () => ({
   APIKeySlotManager: ({ onClose }: { onClose: () => void }) => (
@@ -45,6 +55,8 @@ describe('StudioModalBridge', () => {
   beforeEach(() => {
     baseProps.updateCurrentSession.mockReset();
     baseProps.triggerSave.mockReset();
+    mockAuth.user = { uid: 'test-user' };
+    mockAuth.signInWithGoogle.mockReset();
   });
 
   it('apiKeyOpen=false, saveSlotOpen=false → 아무 modal 도 안 그림', () => {
@@ -61,6 +73,26 @@ describe('StudioModalBridge', () => {
     );
     expect(screen.queryByTestId('api-key-modal')).toBeNull();
     expect(screen.queryByTestId('save-slot-modal')).toBeNull();
+  });
+
+  it('[로그인 게이팅] 비로그인 + apiKeyOpen=true → 모달 미렌더 + setApiKeyOpen(false) + 로그인 유도', () => {
+    mockAuth.user = null;
+    const setApiKeyOpen = jest.fn();
+    render(
+      <Wrapper>
+        <StudioModalBridge
+          {...baseProps}
+          apiKeyOpen={true}
+          setApiKeyOpen={setApiKeyOpen}
+          saveSlotOpen={false}
+          setSaveSlotOpen={jest.fn()}
+        />
+      </Wrapper>,
+    );
+    // 키 모달은 열리지 않고, 부모 state 를 false 로 되돌리며, 로그인을 유도한다.
+    expect(screen.queryByTestId('api-key-modal')).toBeNull();
+    expect(setApiKeyOpen).toHaveBeenCalledWith(false);
+    expect(mockAuth.signInWithGoogle).toHaveBeenCalledTimes(1);
   });
 
   it('apiKeyOpen=true → ModalProvider open + APIKeySlotManager 렌더', () => {

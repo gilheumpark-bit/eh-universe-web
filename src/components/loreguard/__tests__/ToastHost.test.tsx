@@ -152,3 +152,30 @@ describe("ToastHost — 상호작용", () => {
     expect(jest.getTimerCount()).toBe(0);
   });
 });
+
+describe("ToastHost — 동일 토스트 throttle (저장/동기화 반복 억제)", () => {
+  it("DEDUPE_MS 내 동일 (variant|message) 재요청은 1회만 표시", () => {
+    const { container } = render(<ToastHost />);
+    dispatchToast({ message: "저장 완료", variant: "info" });
+    dispatchToast({ message: "저장 완료", variant: "info" }); // 즉시 중복 → 무시
+    dispatchToast({ message: "저장 완료", variant: "info" });
+    expect(container.querySelectorAll(".noa-toast")).toHaveLength(1);
+  });
+
+  it("DEDUPE_MS(6s) 경과 후 동일 메시지 재표시 허용", () => {
+    render(<ToastHost />);
+    dispatchToast({ message: "동기화", variant: "info" });
+    expect(screen.getByText("동기화")).toBeInTheDocument();
+    advance(6000); // dedupe 창 + info 4s 자동 dismiss 경과
+    dispatchToast({ message: "동기화", variant: "info" });
+    expect(screen.getByText("동기화")).toBeInTheDocument();
+  });
+
+  it("variant/message 가 다르면 throttle 무관 (정상 토스트 보존)", () => {
+    const { container } = render(<ToastHost />);
+    dispatchToast({ message: "저장 완료", variant: "info" });
+    dispatchToast({ message: "저장 완료", variant: "success" }); // 다른 variant 키
+    dispatchToast({ message: "다른 메시지", variant: "info" });
+    expect(container.querySelectorAll(".noa-toast")).toHaveLength(3);
+  });
+});
